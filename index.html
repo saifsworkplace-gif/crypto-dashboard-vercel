@@ -70,7 +70,7 @@
 
     <div class="section" id="technicalAnalysisSection">
       <h2>📈 BTC Technical Analysis</h2>
-      <div id="technicalAnalysis">Loading indicators...</div>
+      <div id="technicalAnalysis">RSI: 51.23 (Neutral), MACD: 0.87 (Bullish), SMA20: $42,500</div>
     </div>
 
     <div class="section" id="newsSection">
@@ -92,68 +92,108 @@
   <script>
     async function loadAllData() {
       document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleString()}`;
-      loadPortfolio();
-      loadMarketData();
-      loadBTCDominance();
-      loadTechnicalAnalysis();
-      loadNews();
-      loadWhaleAlerts();
-      loadFearGreedIndex();
+      await Promise.all([
+        loadPortfolio(),
+        loadMarketData(),
+        loadBTCDominance(),
+        loadNews(),
+        loadWhaleAlerts(),
+        loadFearGreedIndex()
+      ]);
     }
 
     async function loadPortfolio() {
-      const portfolio = [
-        { symbol: 'BTC', qty: 0.5, entry: 30000 },
-        { symbol: 'ETH', qty: 2, entry: 2000 }
-      ];
-      const prices = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd').then(res => res.json());
-      let html = '';
-      portfolio.forEach(p => {
-        const price = prices[p.symbol.toLowerCase()].usd;
-        const value = p.qty * price;
-        const pnl = (price - p.entry) * p.qty;
-        html += `<div>${p.symbol}: ${p.qty} × $${price.toFixed(2)} = $${value.toFixed(2)} (P&L: $${pnl.toFixed(2)})</div>`;
-      });
-      document.getElementById('portfolioTracker').innerHTML = html;
+      try {
+        const portfolio = [
+          { id: 'bitcoin', symbol: 'BTC', qty: 0.5, entry: 30000 },
+          { id: 'ethereum', symbol: 'ETH', qty: 2, entry: 2000 }
+        ];
+        const ids = portfolio.map(p => p.id).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const prices = await res.json();
+
+        let html = '';
+        portfolio.forEach(p => {
+          const price = prices[p.id]?.usd || 0;
+          const value = p.qty * price;
+          const pnl = (price - p.entry) * p.qty;
+          html += `<div>${p.symbol}: ${p.qty} × $${price.toFixed(2)} = $${value.toFixed(2)} (P&L: <b style="color:${pnl >= 0 ? 'lime' : 'red'}">$${pnl.toFixed(2)}</b>)</div>`;
+        });
+
+        document.getElementById('portfolioTracker').innerHTML = html;
+      } catch (e) {
+        document.getElementById('portfolioTracker').innerText = 'Failed to load portfolio data.';
+      }
     }
 
     async function loadMarketData() {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
-      const data = await response.json();
-      let html = '';
-      for (const key in data) {
-        const coin = data[key];
-        html += `<div>${key.toUpperCase()}: $${coin.usd} (${coin.usd_24h_change.toFixed(2)}%)</div>`;
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+        const data = await response.json();
+        let html = '';
+        for (const key in data) {
+          const coin = data[key];
+          html += `<div>${key.toUpperCase()}: $${coin.usd} (${coin.usd_24h_change.toFixed(2)}%)</div>`;
+        }
+        document.getElementById('marketOverview').innerHTML = html;
+      } catch (e) {
+        document.getElementById('marketOverview').innerText = 'Market data unavailable.';
       }
-      document.getElementById('marketOverview').innerHTML = html;
     }
 
     async function loadBTCDominance() {
-      const response = await fetch('https://api.coingecko.com/api/v3/global');
-      const data = await response.json();
-      const btcDom = data.data.market_cap_percentage.btc;
-      document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
-    }
-
-    async function loadTechnicalAnalysis() {
-      document.getElementById('technicalAnalysis').innerText = 'RSI: 51.23 (Neutral), MACD: 0.87 (Bullish), SMA20: $42,500';
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/global');
+        const data = await response.json();
+        const btcDom = data.data.market_cap_percentage.btc;
+        document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
+      } catch (e) {
+        document.getElementById('btcDominance').innerText = 'Dominance data unavailable.';
+      }
     }
 
     async function loadNews() {
-      document.getElementById('cryptoNews').innerHTML = '🟡 Top 5 crypto news headlines will appear here (mocked)';
+      // Mock data (replace with real API when you have one)
+      const headlines = [
+        "🔸 Bitcoin ETF inflows hit $200M in a single day.",
+        "🔹 Ethereum upgrade expected in Q4 2025.",
+        "📉 Market correction wipes $50B in crypto value.",
+        "🚀 Solana network processes 100M transactions/day.",
+        "💰 Binance launches new P2P rewards program."
+      ];
+      let html = '';
+      headlines.forEach(headline => {
+        html += `<div>${headline}</div>`;
+      });
+      document.getElementById('cryptoNews').innerHTML = html;
     }
 
     async function loadWhaleAlerts() {
-      document.getElementById('whaleAlerts').innerText = '🟡 1,000 BTC moved to Binance - 2 hours ago';
+      // Mock data (replace with real Whale Alert API later)
+      const alerts = [
+        "🐳 1,200 BTC moved to Coinbase – 1h ago",
+        "🐋 850 ETH withdrawn from Binance – 2h ago",
+        "🐳 5M USDT transferred to unknown wallet – 3h ago"
+      ];
+      let html = '';
+      alerts.forEach(alert => {
+        html += `<div>${alert}</div>`;
+      });
+      document.getElementById('whaleAlerts').innerHTML = html;
     }
 
     async function loadFearGreedIndex() {
-      const response = await fetch('https://api.alternative.me/fng/');
-      const data = await response.json();
-      const index = data.data[0];
-      document.getElementById('fearGreedIndex').innerText = `Index: ${index.value} (${index.value_classification})`;
+      try {
+        const response = await fetch('https://api.alternative.me/fng/');
+        const data = await response.json();
+        const index = data.data[0];
+        document.getElementById('fearGreedIndex').innerText = `Index: ${index.value} (${index.value_classification})`;
+      } catch (e) {
+        document.getElementById('fearGreedIndex').innerText = 'Sentiment data unavailable.';
+      }
     }
 
+    // Load all on first render
     loadAllData();
   </script>
 </body>
