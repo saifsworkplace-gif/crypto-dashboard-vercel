@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Crypto Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Fira Mono', monospace;
       background-color: #121124;
-      color: white;
+      color: #fff;
       margin: 0;
       padding: 0;
     }
@@ -23,7 +23,7 @@
       color: #ffa726;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 10px;
       margin: 0;
     }
     hr {
@@ -32,6 +32,7 @@
       margin: 10px 0 20px 0;
     }
     .refresh-btn {
+      float: right;
       background-color: #ffa726;
       color: #121124;
       border: none;
@@ -56,19 +57,11 @@
       font-weight: bold;
       font-size: 18px;
     }
-    a {
-      color: #42a5f5;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
   <div class="section">
-    <h2>
-      💼 Your Portfolio
+    <h2>💼 Your Portfolio
       <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
     </h2>
     <hr>
@@ -100,7 +93,7 @@
     <div id="fearGreed">Loading...</div>
   </div>
 
-  <script>
+  <script defer>
     const portfolio = [
       { symbol: "AVAX", qty: 115.51, buyPrice: 26.4 },
       { symbol: "INJ", qty: 130.07, buyPrice: 14.47 },
@@ -110,5 +103,77 @@
     ];
 
     async function loadAllData() {
+      const coinMap = {
+        AVAX: "avalanche-2",
+        INJ: "injective-protocol",
+        RENDER: "render-token",
+        ADX: "adex",
+        HBAR: "hedera-hashgraph"
+      };
+
       try {
-        const cgResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2,injective-protocol,render-token,adex,hedera-
+        const cgResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2,injective-protocol,render-token,adex,hedera-hashgraph&vs_currencies=usd&include_24hr_change=true");
+        const cgData = await cgResponse.json();
+
+        let html = "";
+        let totalPnl = 0;
+
+        for (let coin of portfolio) {
+          const id = coinMap[coin.symbol];
+          const price = cgData[id].usd;
+          const value = (price * coin.qty).toFixed(2);
+          const pnl = (price - coin.buyPrice) * coin.qty;
+          totalPnl += pnl;
+          const pnlText = pnl >= 0 ? `<span class='green'>+$${pnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(pnl.toFixed(2))}</span>`;
+
+          html += `<div class='coin-row'>
+              ${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(7)} × $${price.toFixed(2)} = $${value.padStart(8)}   (P&L: ${pnlText})
+          </div>`;
+        }
+
+        document.getElementById("portfolio").innerHTML = html;
+        const totalText = totalPnl >= 0 ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+        document.getElementById("totalPnl").innerHTML = `Total P&L: ${totalText}`;
+
+        // Market Overview
+        const marketHtml = Object.keys(coinMap).map(symbol => {
+          const id = coinMap[symbol];
+          return `${symbol}: $${cgData[id].usd.toFixed(2)} (${cgData[id].usd_24h_change.toFixed(2)}%)`;
+        }).join("\n");
+        document.getElementById("marketOverview").textContent = marketHtml;
+
+      } catch (e) {
+        document.getElementById("portfolio").textContent = "Error loading portfolio.";
+        document.getElementById("marketOverview").textContent = "Error loading market data.";
+      }
+
+      try {
+        const domRes = await fetch("https://api.coingecko.com/api/v3/global");
+        const domData = await domRes.json();
+        document.getElementById("btcDominance").textContent = `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
+      } catch (e) {
+        document.getElementById("btcDominance").textContent = "Error loading dominance.";
+      }
+
+      try {
+        const fgRes = await fetch("https://api.alternative.me/fng/");
+        const fgData = await fgRes.json();
+        const fg = fgData.data[0];
+        document.getElementById("fearGreed").textContent = `Index: ${fg.value} (${fg.value_classification})`;
+      } catch (e) {
+        document.getElementById("fearGreed").textContent = "Error loading Fear & Greed Index.";
+      }
+
+      try {
+        const newsRes = await fetch("https://cryptopanic.com/api/v1/posts/?auth_token=879a594ba23a5e397637a78effca34a3d5b702b0&public=true");
+        const newsData = await newsRes.json();
+        document.getElementById("newsFeed").innerHTML = newsData.results.slice(0, 5).map(post => `<div>• <a href="${post.url}" target="_blank">${post.title}</a></div>`).join('');
+      } catch (e) {
+        document.getElementById("newsFeed").textContent = "Error loading news.";
+      }
+    }
+
+    loadAllData();
+  </script>
+</body>
+</html>
