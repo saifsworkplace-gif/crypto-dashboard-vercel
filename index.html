@@ -1,13 +1,17 @@
 <script>
   async function loadAllData() {
     document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleString()}`;
-    await loadPortfolio();
-    await loadMarketData();
-    await loadBTCDominance();
-    await loadTechnicalAnalysis();
-    await loadNews();
-    await loadWhaleAlerts();
-    await loadFearGreedIndex();
+    try {
+      await loadPortfolio();
+      await loadMarketData();
+      await loadBTCDominance();
+      await loadTechnicalAnalysis();
+      await loadNews();
+      await loadWhaleAlerts();
+      await loadFearGreedIndex();
+    } catch (error) {
+      console.error("loadAllData error:", error);
+    }
   }
 
   async function loadPortfolio() {
@@ -18,25 +22,26 @@
       { symbol: 'ADX', qty: 9132, entry: 0.1095, id: 'adex' },
       { symbol: 'HBAR', qty: 3546.82, entry: 0.28164, id: 'hedera-hashgraph' }
     ];
-
     try {
       const ids = portfolio.map(p => p.id).join(',');
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
       const prices = await res.json();
-
       let html = '';
       portfolio.forEach(p => {
-        const live = prices[p.id]?.usd ?? 0;
-        const value = p.qty * live;
-        const pnl = (live - p.entry) * p.qty;
+        const price = prices[p.id]?.usd;
+        if (price === undefined) {
+          html += `<div>${p.symbol}: ⚠️ Price not available</div>`;
+          return;
+        }
+        const value = p.qty * price;
+        const pnl = (price - p.entry) * p.qty;
         const pnlColor = pnl >= 0 ? 'limegreen' : 'red';
-        html += `<div>${p.symbol}: ${p.qty} × $${live.toFixed(2)} = $${value.toFixed(2)} (P&L: <span style="color:${pnlColor}">$${pnl.toFixed(2)}</span>)</div>`;
+        html += `<div>${p.symbol}: ${p.qty} × $${price.toFixed(2)} = $${value.toFixed(2)} (P&L: <span style="color:${pnlColor}">$${pnl.toFixed(2)}</span>)</div>`;
       });
-
       document.getElementById('portfolioTracker').innerHTML = html;
     } catch (error) {
-      document.getElementById('portfolioTracker').innerHTML = '⚠️ Failed to load portfolio data.';
-      console.error('Portfolio Error:', error);
+      console.error("Portfolio error:", error);
+      document.getElementById('portfolioTracker').innerHTML = '⚠️ Failed to load portfolio.';
     }
   }
 
@@ -45,19 +50,21 @@
     try {
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`);
       const data = await res.json();
-
       let html = '';
       ids.forEach(id => {
         const coin = data[id];
-        if (!coin) return;
+        if (!coin || coin.usd === undefined) {
+          html += `<div>${id.toUpperCase()}: ⚠️ Price unavailable</div>`;
+          return;
+        }
         const name = id.replace(/-/g, ' ').toUpperCase();
-        html += `<div>${name}: $${coin.usd.toFixed(2)} (${coin.usd_24h_change?.toFixed(2) ?? '0.00'}%)</div>`;
+        const change = coin.usd_24h_change?.toFixed(2) ?? '0.00';
+        html += `<div>${name}: $${coin.usd.toFixed(2)} (${change}%)</div>`;
       });
-
       document.getElementById('marketOverview').innerHTML = html;
     } catch (error) {
+      console.error("Market data error:", error);
       document.getElementById('marketOverview').innerHTML = '⚠️ Failed to load market data.';
-      console.error('Market Data Error:', error);
     }
   }
 
@@ -68,8 +75,8 @@
       const btcDom = data?.data?.market_cap_percentage?.btc ?? 0;
       document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
     } catch (error) {
+      console.error("BTC dominance error:", error);
       document.getElementById('btcDominance').innerText = '⚠️ Failed to load BTC dominance.';
-      console.error('BTC Dominance Error:', error);
     }
   }
 
@@ -78,11 +85,21 @@
   }
 
   async function loadNews() {
-    document.getElementById('cryptoNews').innerHTML = '🟡 Top 5 crypto news headlines will appear here (mocked)';
+    try {
+      document.getElementById('cryptoNews').innerHTML = '🟡 Top 5 crypto news headlines will appear here (mocked)';
+    } catch (error) {
+      console.error("News error:", error);
+      document.getElementById('cryptoNews').innerText = '⚠️ Failed to load news.';
+    }
   }
 
   async function loadWhaleAlerts() {
-    document.getElementById('whaleAlerts').innerText = '🟡 1,000 BTC moved to Binance - 2 hours ago';
+    try {
+      document.getElementById('whaleAlerts').innerText = '🟡 1,000 BTC moved to Binance - 2 hours ago';
+    } catch (error) {
+      console.error("Whale alert error:", error);
+      document.getElementById('whaleAlerts').innerText = '⚠️ Failed to load whale alerts.';
+    }
   }
 
   async function loadFearGreedIndex() {
@@ -92,8 +109,8 @@
       const index = data?.data?.[0];
       document.getElementById('fearGreedIndex').innerText = `Index: ${index?.value} (${index?.value_classification})`;
     } catch (error) {
-      document.getElementById('fearGreedIndex').innerText = '⚠️ Failed to load Fear & Greed Index.';
-      console.error('Fear & Greed Error:', error);
+      console.error("Fear & Greed error:", error);
+      document.getElementById('fearGreedIndex').innerText = '⚠️ Failed to load sentiment.';
     }
   }
 
