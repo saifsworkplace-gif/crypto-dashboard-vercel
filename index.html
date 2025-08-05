@@ -6,23 +6,38 @@
   <title>Crypto Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg-color: #121124;
+      --section-color: #1c1b36;
+      --text-color: #fff;
+      --accent-color: #ffa726;
+    }
+
+    body.light {
+      --bg-color: #f2f2f2;
+      --section-color: #ffffff;
+      --text-color: #000;
+      --accent-color: #ff9800;
+    }
+
     body {
       font-family: 'Fira Mono', monospace;
-      background-color: #121124;
-      color: #fff;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       margin: 0;
       padding: 0;
+      transition: all 0.3s ease;
     }
 
     .section {
-      background-color: #1c1b36;
+      background-color: var(--section-color);
       border-radius: 20px;
       padding: 20px 20px 10px 20px;
       margin: 20px;
     }
 
     h2 {
-      color: #ffa726;
+      color: var(--accent-color);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -31,7 +46,7 @@
 
     hr {
       border: none;
-      border-top: 3px solid #ffa726;
+      border-top: 3px solid var(--accent-color);
       margin: 10px 0 20px 0;
     }
 
@@ -43,19 +58,20 @@
       margin-bottom: 0;
     }
 
-    .refresh-btn {
-      background-color: #ffa726;
-      color: #121124;
+    .refresh-btn, .theme-btn {
+      background-color: var(--accent-color);
+      color: var(--bg-color);
       border: none;
       padding: 5px 15px;
       cursor: pointer;
       border-radius: 5px;
       font-weight: bold;
+      margin-left: 10px;
     }
 
     .timestamp {
       font-size: 12px;
-      color: #aaa;
+      color: gray;
       margin-left: 15px;
     }
 
@@ -68,9 +84,10 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 6px;
+      white-space: pre;
     }
 
-    .green { color: #00ff99; }
+    .green { color: #00c27e; }
     .red { color: #ff6666; }
 
     .total-pnl {
@@ -85,7 +102,7 @@
       text-align: center;
       font-size: 28px;
       font-weight: bold;
-      color: #ffa726;
+      color: var(--accent-color);
       margin-top: 30px;
     }
 
@@ -104,6 +121,7 @@
       <h2>💼 Your Portfolio</h2>
       <div>
         <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
+        <button class="theme-btn" onclick="toggleTheme()">Toggle Theme</button>
         <span class="timestamp" id="lastUpdated">Last updated: --</span>
       </div>
     </div>
@@ -133,7 +151,7 @@
     <div id="fearGreed">Loading...</div>
   </div>
 
-  <script defer>
+  <script>
     const portfolio = [
       { symbol: "AVAX", qty: 115.51, buyPrice: 26.4 },
       { symbol: "INJ", qty: 130.07, buyPrice: 14.47 },
@@ -141,6 +159,10 @@
       { symbol: "ADX", qty: 9132, buyPrice: 0.11 },
       { symbol: "HBAR", qty: 3546.82, buyPrice: 0.28 },
     ];
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
 
     async function loadAllData() {
       const coinMap = {
@@ -165,20 +187,28 @@
           const id = coinMap[coin.symbol];
           const price = cgData[id].usd;
           const value = (price * coin.qty).toFixed(2);
-          const pnl = (price - coin.buyPrice) * coin.qty;
+          const cost = coin.qty * coin.buyPrice;
+          const pnl = price * coin.qty - cost;
+          const pnlPercent = ((pnl / cost) * 100).toFixed(2);
+
           totalPnl += pnl;
-          const pnlText = pnl >= 0 ? `<span class='green'>+$${pnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(pnl.toFixed(2))}</span>`;
+
+          const pnlText = pnl >= 0
+            ? `<span class='green'>+$${pnl.toFixed(2)} / +${pnlPercent}%</span>`
+            : `<span class='red'>-$${Math.abs(pnl.toFixed(2))} / ${pnlPercent}%</span>`;
 
           html += `<div class='coin-row'>
-            ${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(7)} × $${price.toFixed(2)} = $${value.padStart(8)}   (P&L: ${pnlText})
+${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(8)} × $${price.toFixed(2).padStart(7)} = $${value.padStart(8)}   (P&L:${pnlText})
           </div>`;
         }
 
         document.getElementById("portfolio").innerHTML = html;
-        const totalText = totalPnl >= 0 ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+
+        const totalText = totalPnl >= 0
+          ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
+          : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
         document.getElementById("totalPnl").innerHTML = `Total P&L: ${totalText}`;
 
-        // Market Overview
         const marketHtml = Object.keys(coinMap).map(symbol => {
           const id = coinMap[symbol];
           return `<div class="market-line">${symbol}: $${cgData[id].usd.toFixed(2)} (${cgData[id].usd_24h_change.toFixed(2)}%)</div>`;
