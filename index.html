@@ -43,12 +43,13 @@
         }
         .portfolio-table, .market-overview {
             width: 100%;
-            white-space: pre;
+            font-family: 'Fira Mono', monospace;
         }
         .coin-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
+            font-size: 16px;
         }
         .green { color: #00ff99; }
         .red { color: #ff6666; }
@@ -61,9 +62,7 @@
 </head>
 <body>
     <div class="section">
-        <h2>💼 Your Portfolio
-            <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
-        </h2>
+        <h2>💼 Your Portfolio <button class="refresh-btn" onclick="loadAllData()">Refresh</button></h2>
         <hr>
         <div id="portfolio" class="portfolio-table">Loading...</div>
         <div id="totalPnl" class="total-pnl"></div>
@@ -126,9 +125,7 @@
                     totalPnl += pnl;
                     const pnlText = pnl >= 0 ? `<span class='green'>+$${pnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(pnl.toFixed(2))}</span>`;
 
-                    html += `<div class='coin-row'>
-                        ${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(7)} × $${price.toFixed(2)} = $${value.padStart(8)}   (P&L: ${pnlText})
-                    </div>`;
+                    html += `<div class='coin-row'><div>${coin.symbol}</div><div>${coin.qty.toFixed(2)} × $${price.toFixed(2)} = $${value} (P&L: ${pnlText})</div></div>`;
                 }
 
                 document.getElementById("portfolio").innerHTML = html;
@@ -143,20 +140,19 @@
                 const newsData = await newsRes.json();
                 document.getElementById("newsFeed").innerHTML = newsData.results.slice(0, 5).map(post => `<div>• <a href='${post.url}' target='_blank'>${post.title}</a></div>`).join('');
 
-                const marketHtml = `
-ADEx: $${cgData["adex"].usd.toFixed(2)} (${cgData["adex"].usd_24h_change.toFixed(2)}%)
-AVALANCHE-2: $${cgData["avalanche-2"].usd.toFixed(2)} (${cgData["avalanche-2"].usd_24h_change.toFixed(2)}%)
-INJECTIVE-PROTOCOL: $${cgData["injective-protocol"].usd.toFixed(2)} (${cgData["injective-protocol"].usd_24h_change.toFixed(2)}%)
-RENDER-TOKEN: $${cgData["render-token"].usd.toFixed(2)} (${cgData["render-token"].usd_24h_change.toFixed(2)}%)
-HEDERA-HASHGRAPH: $${cgData["hedera-hashgraph"].usd.toFixed(2)} (${cgData["hedera-hashgraph"].usd_24h_change.toFixed(2)}%)
-                `;
-                document.getElementById("marketOverview").textContent = marketHtml;
+                const marketHtml = [
+                    `ADEx: $${cgData["adex"].usd.toFixed(2)} (${cgData["adex"].usd_24h_change.toFixed(2)}%)`,
+                    `AVAX: $${cgData["avalanche-2"].usd.toFixed(2)} (${cgData["avalanche-2"].usd_24h_change.toFixed(2)}%)`,
+                    `INJ: $${cgData["injective-protocol"].usd.toFixed(2)} (${cgData["injective-protocol"].usd_24h_change.toFixed(2)}%)`,
+                    `RENDER: $${cgData["render-token"].usd.toFixed(2)} (${cgData["render-token"].usd_24h_change.toFixed(2)}%)`,
+                    `HBAR: $${cgData["hedera-hashgraph"].usd.toFixed(2)} (${cgData["hedera-hashgraph"].usd_24h_change.toFixed(2)}%)`
+                ].join('<br>');
+                document.getElementById("marketOverview").innerHTML = marketHtml;
 
                 const fgRes = await fetch("https://api.alternative.me/fng/");
                 const fgData = await fgRes.json();
                 const fg = fgData.data[0];
                 document.getElementById("fearGreed").textContent = `Index: ${fg.value} (${fg.value_classification})`;
-
             } catch (err) {
                 console.error("Error loading data:", err);
             }
