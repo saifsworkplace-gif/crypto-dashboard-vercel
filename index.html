@@ -1,181 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crypto Trading Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #0f0f23;
-      color: white;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #1a1a2e;
-      padding: 20px;
-      text-align: center;
-    }
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .section {
-      background-color: #1a1a2e;
-      margin-bottom: 20px;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    .section h2 {
-      color: #f39c12;
-      border-bottom: 1px solid #f39c12;
-      padding-bottom: 10px;
-    }
-    .refresh-btn {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    .profit { color: lime; font-weight: bold; }
-    .loss { color: red; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>🚀 Crypto Trading Dashboard</h1>
-    <div id="lastUpdated">Last updated: --</div>
-    <button class="refresh-btn" onclick="loadAllData()">🔄 Refresh Data</button>
-  </header>
+<script>
+  async function loadAllData() {
+    document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleString()}`;
+    loadPortfolio();
+    loadMarketData();
+    loadBTCDominance();
+    loadTechnicalAnalysis();
+    loadNews();
+    loadWhaleAlerts();
+    loadFearGreedIndex();
+  }
 
-  <div class="container">
-    <div class="section" id="portfolioSection">
-      <h2>💼 Your Portfolio</h2>
-      <div id="portfolioTracker">Loading portfolio...</div>
-    </div>
-
-    <div class="section" id="marketOverviewSection">
-      <h2>📊 Market Overview</h2>
-      <div id="marketOverview">Loading market data...</div>
-    </div>
-
-    <div class="section" id="btcDominanceSection">
-      <h2>👑 BTC Dominance</h2>
-      <div id="btcDominance">Loading BTC dominance...</div>
-    </div>
-
-    <div class="section" id="technicalAnalysisSection">
-      <h2>📈 BTC Technical Analysis</h2>
-      <div id="technicalAnalysis">Loading indicators...</div>
-    </div>
-
-    <div class="section" id="newsSection">
-      <h2>📰 Latest Crypto News</h2>
-      <div id="cryptoNews">Loading news...</div>
-    </div>
-
-    <div class="section" id="whaleAlertsSection">
-      <h2>🐋 Whale Activity</h2>
-      <div id="whaleAlerts">Monitoring whale movements...</div>
-    </div>
-
-    <div class="section" id="fearGreedSection">
-      <h2>😱 Fear & Greed Index</h2>
-      <div id="fearGreedIndex">Loading sentiment data...</div>
-    </div>
-  </div>
-
-  <script>
+  async function loadPortfolio() {
     const portfolio = [
-      { symbol: 'BTC', qty: 0.5, entry: 30000 },
-      { symbol: 'ETH', qty: 2, entry: 2000 },
-      { symbol: 'AVAX', qty: 115.51, entry: 25.96 },
-      { symbol: 'INJ', qty: 130.07, entry: 15.45 },
-      { symbol: 'RENDER', qty: 215.624, entry: 4.63 },
-      { symbol: 'ADX', qty: 9132, entry: 0.1095 },
-      { symbol: 'HBAR', qty: 3546.82, entry: 0.28164 }
+      { symbol: 'AVAX', qty: 115.51, entry: 25.96, id: 'avalanche-2' },
+      { symbol: 'INJ', qty: 130.07, entry: 15.345, id: 'injective-protocol' },
+      { symbol: 'RENDER', qty: 215.624, entry: 4.63, id: 'render-token' },
+      { symbol: 'ADX', qty: 9132, entry: 0.1095, id: 'adex' },
+      { symbol: 'HBAR', qty: 3546.82, entry: 0.28164, id: 'hedera-hashgraph' }
     ];
 
-    async function loadAllData() {
-      document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleString()}`;
-      loadPortfolio();
-      loadMarketData();
-      loadBTCDominance();
-      loadTechnicalAnalysis();
-      loadNews();
-      loadWhaleAlerts();
-      loadFearGreedIndex();
+    const ids = portfolio.map(p => p.id).join(',');
+    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+    const prices = await res.json();
+
+    let html = '';
+    portfolio.forEach(p => {
+      const live = prices[p.id]?.usd ?? 0;
+      const value = p.qty * live;
+      const pnl = (live - p.entry) * p.qty;
+      const pnlColor = pnl >= 0 ? 'limegreen' : 'red';
+      html += `<div>${p.symbol}: ${p.qty} × $${live.toFixed(2)} = $${value.toFixed(2)} (P&L: <span style="color:${pnlColor}">$${pnl.toFixed(2)}</span>)</div>`;
+    });
+
+    document.getElementById('portfolioTracker').innerHTML = html;
+  }
+
+  async function loadMarketData() {
+    const ids = ['bitcoin', 'ethereum', 'avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'].join(',');
+    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+    const data = await res.json();
+
+    let html = '';
+    for (const id in data) {
+      const price = data[id].usd;
+      const change = data[id].usd_24h_change;
+      html += `<div>${id.toUpperCase()}: $${price} (${change.toFixed(2)}%)</div>`;
     }
 
-    async function loadPortfolio() {
-      const ids = portfolio.map(p => p.symbol.toLowerCase()).join(',');
-      const prices = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`).then(res => res.json());
-      let html = '';
-      portfolio.forEach(p => {
-        const price = prices[p.symbol.toLowerCase()]?.usd || 0;
-        const value = p.qty * price;
-        const pnl = (price - p.entry) * p.qty;
-        html += `<div>${p.symbol}: ${p.qty} × $${price.toFixed(2)} = $${value.toFixed(2)} (P&L: <span class="${pnl >= 0 ? 'profit' : 'loss'}">$${pnl.toFixed(2)}</span>)</div>`;
-      });
-      document.getElementById('portfolioTracker').innerHTML = html;
-    }
+    document.getElementById('marketOverview').innerHTML = html;
+  }
 
-    async function loadMarketData() {
-      const ids = 'bitcoin,ethereum,avalanche-2,injective-protocol,render-token,adex,hbar';
-      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-      const data = await response.json();
-      let html = '';
-      for (const key in data) {
-        const coin = data[key];
-        html += `<div>${key.toUpperCase()}: $${coin.usd} (${coin.usd_24h_change.toFixed(2)}%)</div>`;
-      }
-      document.getElementById('marketOverview').innerHTML = html;
-    }
+  async function loadBTCDominance() {
+    const response = await fetch('https://api.coingecko.com/api/v3/global');
+    const data = await response.json();
+    const btcDom = data.data.market_cap_percentage.btc;
+    document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
+  }
 
-    async function loadBTCDominance() {
-      const response = await fetch('https://api.coingecko.com/api/v3/global');
-      const data = await response.json();
-      const btcDom = data.data.market_cap_percentage.btc;
-      document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
-    }
+  async function loadTechnicalAnalysis() {
+    document.getElementById('technicalAnalysis').innerText = 'RSI: 51.23 (Neutral), MACD: 0.87 (Bullish), SMA20: $42,500';
+  }
 
-    async function loadTechnicalAnalysis() {
-      document.getElementById('technicalAnalysis').innerText = 'RSI: 51.23 (Neutral), MACD: 0.87 (Bullish), SMA20: $42,500';
-    }
+  async function loadNews() {
+    document.getElementById('cryptoNews').innerHTML = '🟡 Top 5 crypto news headlines will appear here (mocked)';
+  }
 
-    async function loadNews() {
-      const headlines = [
-        'Bitcoin hits new monthly high',
-        'Ethereum gas fees drop by 30%',
-        'Whales accumulate AVAX',
-        'Altcoin season brewing in Q4',
-        'Institutional interest rises in crypto'
-      ];
-      document.getElementById('cryptoNews').innerHTML = headlines.map(h => `<div>• ${h}</div>`).join('');
-    }
+  async function loadWhaleAlerts() {
+    document.getElementById('whaleAlerts').innerText = '🟡 1,000 BTC moved to Binance - 2 hours ago';
+  }
 
-    async function loadWhaleAlerts() {
-      const alerts = [
-        '🟢 1,000 BTC moved to Binance - 2 hours ago',
-        '🔴 500 ETH moved from Coinbase - 3 hours ago'
-      ];
-      document.getElementById('whaleAlerts').innerHTML = alerts.map(a => `<div>${a}</div>`).join('');
-    }
+  async function loadFearGreedIndex() {
+    const response = await fetch('https://api.alternative.me/fng/');
+    const data = await response.json();
+    const index = data.data[0];
+    document.getElementById('fearGreedIndex').innerText = `Index: ${index.value} (${index.value_classification})`;
+  }
 
-    async function loadFearGreedIndex() {
-      const response = await fetch('https://api.alternative.me/fng/');
-      const data = await response.json();
-      const index = data.data[0];
-      document.getElementById('fearGreedIndex').innerText = `Index: ${index.value} (${index.value_classification})`;
-    }
-
-    loadAllData();
-  </script>
-</body>
-</html>
+  loadAllData();
+</script>
