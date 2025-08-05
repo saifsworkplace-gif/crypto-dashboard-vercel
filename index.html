@@ -35,8 +35,15 @@
       margin: 10px 0 20px 0;
     }
 
+    .refresh-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
     .refresh-btn {
-      float: right;
       background-color: #ffa726;
       color: #121124;
       border: none;
@@ -46,14 +53,21 @@
       font-weight: bold;
     }
 
-    .portfolio-table, .market-overview {
+    .timestamp {
+      font-size: 12px;
+      color: #aaa;
+      margin-left: 15px;
+    }
+
+    .portfolio-table {
       width: 100%;
+      margin-bottom: 0;
     }
 
     .coin-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .green { color: #00ff99; }
@@ -74,8 +88,8 @@
       margin-top: 30px;
     }
 
-    .market-line {
-      margin-bottom: 5px;
+    .market-overview .market-line {
+      margin-bottom: 6px;
     }
   </style>
 </head>
@@ -85,9 +99,13 @@
 
   <!-- Portfolio Section -->
   <div class="section">
-    <h2>💼 Your Portfolio
-      <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
-    </h2>
+    <div class="refresh-container">
+      <h2>💼 Your Portfolio</h2>
+      <div>
+        <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
+        <span class="timestamp" id="lastUpdated">Last updated: --</span>
+      </div>
+    </div>
     <hr>
     <div id="portfolio" class="portfolio-table">Loading...</div>
     <div id="totalPnl" class="total-pnl"></div>
@@ -138,6 +156,9 @@
         ADX: "adex",
         HBAR: "hedera-hashgraph"
       };
+
+      const timestamp = new Date().toLocaleTimeString();
+      document.getElementById("lastUpdated").textContent = `Last updated: ${timestamp}`;
 
       try {
         const cgResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2,injective-protocol,render-token,adex,hedera-hashgraph&vs_currencies=usd&include_24hr_change=true");
