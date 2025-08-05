@@ -1,13 +1,13 @@
 <script>
   async function loadAllData() {
     document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleString()}`;
-    loadPortfolio();
-    loadMarketData();
-    loadBTCDominance();
-    loadTechnicalAnalysis();
-    loadNews();
-    loadWhaleAlerts();
-    loadFearGreedIndex();
+    await loadPortfolio();
+    await loadMarketData();
+    await loadBTCDominance();
+    await loadTechnicalAnalysis();
+    await loadNews();
+    await loadWhaleAlerts();
+    await loadFearGreedIndex();
   }
 
   async function loadPortfolio() {
@@ -19,42 +19,58 @@
       { symbol: 'HBAR', qty: 3546.82, entry: 0.28164, id: 'hedera-hashgraph' }
     ];
 
-    const ids = portfolio.map(p => p.id).join(',');
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-    const prices = await res.json();
+    try {
+      const ids = portfolio.map(p => p.id).join(',');
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+      const prices = await res.json();
 
-    let html = '';
-    portfolio.forEach(p => {
-      const live = prices[p.id]?.usd ?? 0;
-      const value = p.qty * live;
-      const pnl = (live - p.entry) * p.qty;
-      const pnlColor = pnl >= 0 ? 'limegreen' : 'red';
-      html += `<div>${p.symbol}: ${p.qty} × $${live.toFixed(2)} = $${value.toFixed(2)} (P&L: <span style="color:${pnlColor}">$${pnl.toFixed(2)}</span>)</div>`;
-    });
+      let html = '';
+      portfolio.forEach(p => {
+        const live = prices[p.id]?.usd ?? 0;
+        const value = p.qty * live;
+        const pnl = (live - p.entry) * p.qty;
+        const pnlColor = pnl >= 0 ? 'limegreen' : 'red';
+        html += `<div>${p.symbol}: ${p.qty} × $${live.toFixed(2)} = $${value.toFixed(2)} (P&L: <span style="color:${pnlColor}">$${pnl.toFixed(2)}</span>)</div>`;
+      });
 
-    document.getElementById('portfolioTracker').innerHTML = html;
+      document.getElementById('portfolioTracker').innerHTML = html;
+    } catch (error) {
+      document.getElementById('portfolioTracker').innerHTML = '⚠️ Failed to load portfolio data.';
+      console.error('Portfolio Error:', error);
+    }
   }
 
   async function loadMarketData() {
-    const ids = ['bitcoin', 'ethereum', 'avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'].join(',');
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-    const data = await res.json();
+    const ids = ['bitcoin', 'ethereum', 'avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'];
+    try {
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`);
+      const data = await res.json();
 
-    let html = '';
-    for (const id in data) {
-      const price = data[id].usd;
-      const change = data[id].usd_24h_change;
-      html += `<div>${id.toUpperCase()}: $${price} (${change.toFixed(2)}%)</div>`;
+      let html = '';
+      ids.forEach(id => {
+        const coin = data[id];
+        if (!coin) return;
+        const name = id.replace(/-/g, ' ').toUpperCase();
+        html += `<div>${name}: $${coin.usd.toFixed(2)} (${coin.usd_24h_change?.toFixed(2) ?? '0.00'}%)</div>`;
+      });
+
+      document.getElementById('marketOverview').innerHTML = html;
+    } catch (error) {
+      document.getElementById('marketOverview').innerHTML = '⚠️ Failed to load market data.';
+      console.error('Market Data Error:', error);
     }
-
-    document.getElementById('marketOverview').innerHTML = html;
   }
 
   async function loadBTCDominance() {
-    const response = await fetch('https://api.coingecko.com/api/v3/global');
-    const data = await response.json();
-    const btcDom = data.data.market_cap_percentage.btc;
-    document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/global');
+      const data = await response.json();
+      const btcDom = data?.data?.market_cap_percentage?.btc ?? 0;
+      document.getElementById('btcDominance').innerText = `BTC Dominance: ${btcDom.toFixed(2)}%`;
+    } catch (error) {
+      document.getElementById('btcDominance').innerText = '⚠️ Failed to load BTC dominance.';
+      console.error('BTC Dominance Error:', error);
+    }
   }
 
   async function loadTechnicalAnalysis() {
@@ -70,10 +86,15 @@
   }
 
   async function loadFearGreedIndex() {
-    const response = await fetch('https://api.alternative.me/fng/');
-    const data = await response.json();
-    const index = data.data[0];
-    document.getElementById('fearGreedIndex').innerText = `Index: ${index.value} (${index.value_classification})`;
+    try {
+      const response = await fetch('https://api.alternative.me/fng/');
+      const data = await response.json();
+      const index = data?.data?.[0];
+      document.getElementById('fearGreedIndex').innerText = `Index: ${index?.value} (${index?.value_classification})`;
+    } catch (error) {
+      document.getElementById('fearGreedIndex').innerText = '⚠️ Failed to load Fear & Greed Index.';
+      console.error('Fear & Greed Error:', error);
+    }
   }
 
   loadAllData();
