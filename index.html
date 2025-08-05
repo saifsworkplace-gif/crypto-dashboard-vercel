@@ -13,12 +13,14 @@
       margin: 0;
       padding: 0;
     }
+
     .section {
       background-color: #1c1b36;
       border-radius: 20px;
-      padding: 30px;
+      padding: 20px;
       margin: 20px;
     }
+
     h2 {
       color: #ffa726;
       display: flex;
@@ -26,11 +28,13 @@
       gap: 10px;
       margin: 0;
     }
+
     hr {
       border: none;
       border-top: 3px solid #ffa726;
       margin: 10px 0 20px 0;
     }
+
     .refresh-btn {
       float: right;
       background-color: #ffa726;
@@ -41,25 +45,45 @@
       border-radius: 5px;
       font-weight: bold;
     }
+
     .portfolio-table, .market-overview {
       width: 100%;
-      white-space: pre;
     }
+
     .coin-row {
       display: flex;
       justify-content: space-between;
       margin-bottom: 10px;
     }
+
     .green { color: #00ff99; }
     .red { color: #ff6666; }
+
     .total-pnl {
       text-align: right;
       font-weight: bold;
       font-size: 18px;
+      margin-top: 10px;
+    }
+
+    .main-header {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffa726;
+      margin-top: 30px;
+    }
+
+    .market-line {
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
+  <!-- 🚀 Main Title -->
+  <div class="main-header">🚀 Crypto Trading Tracker</div>
+
+  <!-- Portfolio Section -->
   <div class="section">
     <h2>💼 Your Portfolio
       <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
@@ -69,24 +93,28 @@
     <div id="totalPnl" class="total-pnl"></div>
   </div>
 
+  <!-- Market Overview -->
   <div class="section">
     <h2>📊 Market Overview</h2>
     <hr>
     <div id="marketOverview" class="market-overview">Loading...</div>
   </div>
 
+  <!-- BTC Dominance -->
   <div class="section">
     <h2>👑 BTC Dominance</h2>
     <hr>
     <div id="btcDominance">Loading...</div>
   </div>
 
+  <!-- News Feed -->
   <div class="section">
     <h2>📰 Latest Crypto News</h2>
     <hr>
     <div id="newsFeed">Loading...</div>
   </div>
 
+  <!-- Fear & Greed Index -->
   <div class="section">
     <h2>😨 Fear & Greed Index</h2>
     <hr>
@@ -127,7 +155,7 @@
           const pnlText = pnl >= 0 ? `<span class='green'>+$${pnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(pnl.toFixed(2))}</span>`;
 
           html += `<div class='coin-row'>
-              ${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(7)} × $${price.toFixed(2)} = $${value.padStart(8)}   (P&L: ${pnlText})
+            ${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(7)} × $${price.toFixed(2)} = $${value.padStart(8)}   (P&L: ${pnlText})
           </div>`;
         }
 
@@ -138,9 +166,9 @@
         // Market Overview
         const marketHtml = Object.keys(coinMap).map(symbol => {
           const id = coinMap[symbol];
-          return `${symbol}: $${cgData[id].usd.toFixed(2)} (${cgData[id].usd_24h_change.toFixed(2)}%)`;
-        }).join("\n");
-        document.getElementById("marketOverview").textContent = marketHtml;
+          return `<div class="market-line">${symbol}: $${cgData[id].usd.toFixed(2)} (${cgData[id].usd_24h_change.toFixed(2)}%)</div>`;
+        }).join('');
+        document.getElementById("marketOverview").innerHTML = marketHtml;
 
       } catch (e) {
         document.getElementById("portfolio").textContent = "Error loading portfolio.";
