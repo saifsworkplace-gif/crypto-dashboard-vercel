@@ -17,7 +17,7 @@
     .section {
       background-color: #1c1b36;
       border-radius: 20px;
-      padding: 20px;
+      padding: 20px 20px 10px 20px;
       margin: 20px;
     }
 
@@ -40,7 +40,7 @@
       align-items: center;
       justify-content: space-between;
       margin-top: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 0;
     }
 
     .refresh-btn {
@@ -67,7 +67,7 @@
     .coin-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .green { color: #00ff99; }
@@ -78,6 +78,7 @@
       font-weight: bold;
       font-size: 18px;
       margin-top: 10px;
+      margin-bottom: 5px;
     }
 
     .main-header {
@@ -123,13 +124,6 @@
     <h2>👑 BTC Dominance</h2>
     <hr>
     <div id="btcDominance">Loading...</div>
-  </div>
-
-  <!-- News Feed -->
-  <div class="section">
-    <h2>📰 Latest Crypto News</h2>
-    <hr>
-    <div id="newsFeed">Loading...</div>
   </div>
 
   <!-- Fear & Greed Index -->
@@ -211,14 +205,6 @@
         document.getElementById("fearGreed").textContent = `Index: ${fg.value} (${fg.value_classification})`;
       } catch (e) {
         document.getElementById("fearGreed").textContent = "Error loading Fear & Greed Index.";
-      }
-
-      try {
-        const newsRes = await fetch("https://cryptopanic.com/api/v1/posts/?auth_token=879a594ba23a5e397637a78effca34a3d5b702b0&public=true");
-        const newsData = await newsRes.json();
-        document.getElementById("newsFeed").innerHTML = newsData.results.slice(0, 5).map(post => `<div>• <a href="${post.url}" target="_blank">${post.title}</a></div>`).join('');
-      } catch (e) {
-        document.getElementById("newsFeed").textContent = "Error loading news.";
       }
     }
 
