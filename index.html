@@ -1,166 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crypto Dashboard</title>
-  <style>
-    body {
-      background-color: #111122;
-      color: white;
-      font-family: monospace;
-      padding: 20px;
-    }
-    .section {
-      background-color: #1a1a2e;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .section h2 {
-      color: orange;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-    .divider {
-      height: 2px;
-      background-color: orange;
-      margin: 10px 0 20px;
-    }
-    .coin-line {
-      display: flex;
-      justify-content: space-between;
-      white-space: pre;
-    }
-    .positive {
-      color: #00ff88;
-    }
-    .negative {
-      color: #ff5555;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fira Mono', monospace;
+            background-color: #121124;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .section {
+            background-color: #1c1b36;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px;
+        }
+        h2 {
+            color: #ffa726;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+        hr {
+            border: none;
+            border-top: 3px solid #ffa726;
+            margin: 10px 0 20px 0;
+        }
+        .refresh-btn {
+            float: right;
+            background-color: #ffa726;
+            color: #121124;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .portfolio-table, .market-overview {
+            width: 100%;
+            white-space: pre;
+        }
+        .coin-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .green { color: #00ff99; }
+        .red { color: #ff6666; }
+        .total-pnl {
+            text-align: right;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
 </head>
 <body>
-  <div class="section">
-    <h2>💼 Your Portfolio</h2>
-    <div class="divider"></div>
-    <div id="portfolio"></div>
-  </div>
+    <div class="section">
+        <h2>💼 Your Portfolio
+            <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
+        </h2>
+        <hr>
+        <div id="portfolio" class="portfolio-table">Loading...</div>
+        <div id="totalPnl" class="total-pnl"></div>
+    </div>
 
-  <div class="section">
-    <h2>📊 Market Overview</h2>
-    <div class="divider"></div>
-    <div id="market-overview"></div>
-  </div>
+    <div class="section">
+        <h2>📊 Market Overview</h2>
+        <hr>
+        <div id="marketOverview" class="market-overview">Loading...</div>
+    </div>
 
-  <div class="section">
-    <h2>👑 BTC Dominance</h2>
-    <div class="divider"></div>
-    <div id="btc-dominance"></div>
-    <p style="margin-top:10px; font-size: 14px; color: gray;">Source: CoinGecko</p>
-  </div>
+    <div class="section">
+        <h2>👑 BTC Dominance</h2>
+        <hr>
+        <div id="btcDominance">Loading...</div>
+    </div>
 
-  <div class="section">
-    <h2>📰 Latest Crypto News</h2>
-    <div class="divider"></div>
-    <ul id="crypto-news"></ul>
-  </div>
+    <div class="section">
+        <h2>📰 Latest Crypto News</h2>
+        <hr>
+        <div id="newsFeed">Loading...</div>
+    </div>
 
-  <div class="section">
-    <h2>😱 Fear & Greed Index</h2>
-    <div class="divider"></div>
-    <div id="fear-greed"></div>
-  </div>
+    <div class="section">
+        <h2>😨 Fear & Greed Index</h2>
+        <hr>
+        <div id="fearGreed">Loading...</div>
+    </div>
 
-  <script>
-    const holdings = {
-      AVAX: { amount: 115.51, buyPrice: 26.8 },
-      INJ: { amount: 130.07, buyPrice: 14.37 },
-      RENDER: { amount: 215.624, buyPrice: 4.63 },
-      ADX: { amount: 9132, buyPrice: 0.12 },
-      HBAR: { amount: 3546.82, buyPrice: 0.28 }
-    };
+    <script>
+        const portfolio = [
+            { symbol: "AVAX", qty: 115.51, buyPrice: 26.4 },
+            { symbol: "INJ", qty: 130.07, buyPrice: 14.47 },
+            { symbol: "RENDER", qty: 215.624, buyPrice: 4.0 },
+            { symbol: "ADX", qty: 9132, buyPrice: 0.11 },
+            { symbol: "HBAR", qty: 3546.82, buyPrice: 0.28 },
+        ];
 
-    async function fetchPrices() {
-      const ids = "avalanche-2,injective-protocol,render-token,adex,hedera-hashgraph,bitcoin,ethereum";
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-      const res = await fetch(url);
-      return res.json();
-    }
+        async function loadAllData() {
+            try {
+                const cgResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2,injective-protocol,render-token,adex,hedera-hashgraph&vs_currencies=usd&include_24hr_change=true");
+                const cgData = await cgResponse.json();
 
-    async function loadAllData() {
-      const prices = await fetchPrices();
-      const market = document.getElementById("market-overview");
-      const portfolio = document.getElementById("portfolio");
-      const btcDom = document.getElementById("btc-dominance");
-      const fg = document.getElementById("fear-greed");
+                const coinMap = {
+                    AVAX: "avalanche-2",
+                    INJ: "injective-protocol",
+                    RENDER: "render-token",
+                    ADX: "adex",
+                    HBAR: "hedera-hashgraph"
+                };
 
-      let totalPNL = 0;
-      portfolio.innerHTML = "";
-      for (const [coin, data] of Object.entries(holdings)) {
-        const id = getCoinGeckoId(coin);
-        const price = prices[id]?.usd || 0;
-        const currentValue = data.amount * price;
-        const buyValue = data.amount * data.buyPrice;
-        const pnl = currentValue - buyValue;
-        totalPNL += pnl;
-        portfolio.innerHTML += `
-          <div class="coin-line">
-            ${coin.padEnd(6)}: ${String(data.amount).padEnd(8)} × $${price.toFixed(2).padEnd(6)} = $${currentValue.toFixed(2).padEnd(10)} 
-            (P&L: <span class="${pnl >= 0 ? 'positive' : 'negative'}">$${pnl.toFixed(2)}</span>)
-          </div>`;
-      }
-      portfolio.innerHTML += `
-        <div class="coin-line" style="margin-top:10px;">
-          Total P&L: <span class="${totalPNL >= 0 ? 'positive' : 'negative'}">$${totalPNL.toFixed(2)}</span>
-        </div>`;
+                let html = "";
+                let totalPnl = 0;
 
-      market.innerHTML = "";
-      for (const [id, data] of Object.entries(prices)) {
-        const name = id.replace(/-/g, " ").toUpperCase();
-        market.innerHTML += `
-          <div class="coin-line">
-            ${name.padEnd(20)}: $${data.usd.toFixed(2).padEnd(8)} (${data.usd_24h_change.toFixed(2)}%)
-          </div>`;
-      }
+                for (let coin of portfolio) {
+                    const id = coinMap[coin.symbol];
+                    const price = cgData[id].usd;
+                    const value = (price * coin.qty).toFixed(2);
+                    const pnl = (price - coin.buyPrice) * coin.qty;
+                    totalPnl += pnl;
+                    const pnlText = pnl >= 0 ? `<span class='green'>+$${pnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(pnl.toFixed(2))}</span>`;
 
-      // BTC Dominance
-      const domData = await fetch("https://api.coingecko.com/api/v3/global").then(r => r.json());
-      const dominance = domData.data.market_cap_percentage.btc.toFixed(2);
-      btcDom.textContent = `BTC Dominance: ${dominance}%`;
+                    html += `<div class='coin-row'>
+                        ${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(7)} × $${price.toFixed(2)} = $${value.padStart(8)}   (P&L: ${pnlText})
+                    </div>`;
+                }
 
-      // Fear and Greed Index
-      const fgData = await fetch("https://api.alternative.me/fng/").then(r => r.json());
-      const fgVal = fgData.data[0];
-      fg.textContent = `Index: ${fgVal.value} (${fgVal.value_classification})`;
+                document.getElementById("portfolio").innerHTML = html;
+                const totalText = totalPnl >= 0 ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+                document.getElementById("totalPnl").innerHTML = `Total P&L: ${totalText}`;
 
-      // CryptoPanic News
-      const newsContainer = document.getElementById("crypto-news");
-      const newsData = await fetch("https://cryptopanic.com/api/v1/posts/?auth_token=879a594ba23a5e397637a78effca34a3d5b702b0&public=true").then(r => r.json());
-      newsContainer.innerHTML = newsData.results.slice(0, 5).map(n => `
-        <li style="margin-bottom: 8px;">
-          <a href="${n.url}" target="_blank" style="color: lightblue;">${n.title}</a>
-        </li>`).join('');
-    }
+                const dominanceRes = await fetch("https://api.coingecko.com/api/v3/global");
+                const dominanceData = await dominanceRes.json();
+                document.getElementById("btcDominance").textContent = `BTC Dominance: ${dominanceData.data.market_cap_percentage.btc.toFixed(2)}% (via CoinGecko)`;
 
-    function getCoinGeckoId(symbol) {
-      const map = {
-        AVAX: "avalanche-2",
-        INJ: "injective-protocol",
-        RENDER: "render-token",
-        ADX: "adex",
-        HBAR: "hedera-hashgraph",
-        BTC: "bitcoin",
-        ETH: "ethereum"
-      };
-      return map[symbol];
-    }
+                const newsRes = await fetch("https://cryptopanic.com/api/v1/posts/?auth_token=879a594ba23a5e397637a78effca34a3d5b702b0&public=true");
+                const newsData = await newsRes.json();
+                document.getElementById("newsFeed").innerHTML = newsData.results.slice(0, 5).map(post => `<div>• <a href='${post.url}' target='_blank'>${post.title}</a></div>`).join('');
 
-    loadAllData();
-    setInterval(loadAllData, 60000); // Refresh every 1 min
-  </script>
+                const marketHtml = `
+ADEx: $${cgData["adex"].usd.toFixed(2)} (${cgData["adex"].usd_24h_change.toFixed(2)}%)
+AVALANCHE-2: $${cgData["avalanche-2"].usd.toFixed(2)} (${cgData["avalanche-2"].usd_24h_change.toFixed(2)}%)
+INJECTIVE-PROTOCOL: $${cgData["injective-protocol"].usd.toFixed(2)} (${cgData["injective-protocol"].usd_24h_change.toFixed(2)}%)
+RENDER-TOKEN: $${cgData["render-token"].usd.toFixed(2)} (${cgData["render-token"].usd_24h_change.toFixed(2)}%)
+HEDERA-HASHGRAPH: $${cgData["hedera-hashgraph"].usd.toFixed(2)} (${cgData["hedera-hashgraph"].usd_24h_change.toFixed(2)}%)
+                `;
+                document.getElementById("marketOverview").textContent = marketHtml;
+
+                const fgRes = await fetch("https://api.alternative.me/fng/");
+                const fgData = await fgRes.json();
+                const fg = fgData.data[0];
+                document.getElementById("fearGreed").textContent = `Index: ${fg.value} (${fg.value_classification})`;
+
+            } catch (err) {
+                console.error("Error loading data:", err);
+            }
+        }
+
+        loadAllData();
+    </script>
 </body>
 </html>
