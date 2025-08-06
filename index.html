@@ -64,6 +64,8 @@
     .timestamp {
       font-size: 12px;
       color: gray;
+      text-align: right;
+      margin-top: 10px;
     }
     .total-row {
       font-weight: bold;
@@ -90,7 +92,7 @@
     }
     @media (max-width: 768px) {
       .theme-btn, .refresh-btn {
-        flex: 1 1 100%;
+        flex: 1 1 48%;
       }
     }
   </style>
@@ -137,7 +139,7 @@
   <div class="section">
     <h2>🧠 Market Sentiment</h2>
     <div><span class="highlight">BTC Dominance:</span> <span id="btcDominance" class="highlight-value">--%</span></div>
-    <div><span class="highlight">Fear & Greed Index:</span> <span id="fearGreed" class="highlight-value">--</span></div>
+    <div><span class="highlight">Fear &amp; Greed Index:</span> <span id="fearGreed" class="highlight-value">--</span></div>
   </div>
 
   <script>
