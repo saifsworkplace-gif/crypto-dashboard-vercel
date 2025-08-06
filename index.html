@@ -101,10 +101,10 @@
 
   <div class="section">
     <h2>
-      💼 Your Portfolio
+      💼 Portfolio
       <div class="header-controls">
+        <button class="theme-btn" onclick="toggleTheme()" id="themeToggleBtn">🌙 Dark | Light</button>
         <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
-        <button class="theme-btn" onclick="toggleTheme()">Toggle Theme</button>
         <span class="timestamp" id="lastUpdated">Last updated: --</span>
       </div>
     </h2>
@@ -152,7 +152,9 @@
     ];
 
     function toggleTheme() {
-      document.body.classList.toggle('light');
+      const isLight = document.body.classList.toggle('light');
+      const btn = document.getElementById('themeToggleBtn');
+      btn.innerHTML = isLight ? '☀️ Day | Night' : '🌙 Dark | Light';
     }
 
     async function loadAllData() {
