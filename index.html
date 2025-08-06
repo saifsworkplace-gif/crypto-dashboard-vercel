@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+CURRENT FINAL  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -105,10 +105,10 @@
   </style>
 </head>
 <body>
-  <header>📈 Crypto Portfolio Dashboard</header>
+  <header> 💵 🚀 Dashboard 🚀 💵 </header>
   <div class="section">
     <h2>
-      📊 Portfolio
+      🏦 Portfolio
       <div class="header-controls">
         <button class="theme-btn" onclick="toggleTheme()">🌙 Dark | Light ☀️</button>
         <button class="refresh-btn" onclick="loadAllData()">🔁 Refresh</button>
@@ -132,7 +132,7 @@
           <tr class="total-row">
             <td class="highlight">Total P&L:</td>
             <td colspan="3"></td>
-            <td id="totalPnl" class="highlight-value"></td>
+            <td id="totalPnl"></td>
             <td></td>
           </tr>
         </tfoot>
@@ -162,43 +162,6 @@
 
     function toggleTheme() {
       document.body.classList.toggle("light");
-    }
-
-    async function fetchTaapiData(symbol) {
-      const taapiSymbol = `${symbol.toLowerCase()}/usdt`;
-      const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbHVlIjoiNjg5Mzc3YTg4MDZmZjE2NTFlMTJkZGU2IiwiaWF0IjoxNzU0NDk0ODg4LCJleHAiOjMzMjU4OTU4ODg4fQ.xprHBi426shWP8Bp6OjC7ePXdYvRcR4-rH3iCcHBj3Y";
-      try {
-        const [rsiRes, macdRes] = await Promise.all([
-          fetch(`https://api.taapi.io/rsi?secret=${apiKey}&exchange=binance&symbol=${taapiSymbol}&interval=1h`),
-          fetch(`https://api.taapi.io/macd?secret=${apiKey}&exchange=binance&symbol=${taapiSymbol}&interval=1h`)
-        ]);
-
-        const rsiData = await rsiRes.json();
-        const macdData = await macdRes.json();
-
-        return {
-          rsi: rsiData.value,
-          macd: macdData.valueMACD,
-          macdSignal: macdData.valueMACDSignal
-        };
-      } catch {
-        return { rsi: null, macd: null, macdSignal: null };
-      }
-    }
-
-    function interpretRSI(value) {
-      if (value < 30) return `RSI: ${value.toFixed(2)} — Oversold | 🟢 Possible bounce incoming`;
-      if (value < 50) return `RSI: ${value.toFixed(2)} — Neutral / Weak | ⚪ Sideways or early signs forming`;
-      if (value < 70) return `RSI: ${value.toFixed(2)} — Bullish momentum | 🟠 Trend gaining strength`;
-      return `RSI: ${value.toFixed(2)} — Overbought | 🔴 Caution: Overbought zone`;
-    }
-
-    function interpretMACD(macd, signal) {
-      const delta = macd - signal;
-      if (macd >= 0 && delta > 0) return `MACD: +${macd.toFixed(4)} — Bullish crossover | 🟢 Momentum turning up`;
-      if (macd >= 0 && delta < 0) return `MACD: +${macd.toFixed(4)} — Weakening uptrend | 🟠 Watch for trend reversal`;
-      if (macd < 0 && delta > 0) return `MACD: ${macd.toFixed(4)} — Weakening downtrend | ⚪ Downtrend losing steam`;
-      return `MACD: ${macd.toFixed(4)} — Bearish strength | 🔴 Downtrend gaining speed`;
     }
 
     async function loadAllData() {
@@ -261,21 +224,16 @@
       const marketData = await marketRes.json();
 
       let overviewHTML = "";
-      for (let coin of marketData) {
-        const symbol = coin.symbol.toUpperCase();
-        const taapiData = await fetchTaapiData(symbol);
-
+      marketData.forEach(coin => {
         overviewHTML += `
-          <p><strong>🔘 ${symbol}</strong><br>
+          <p><strong>🔘 ${coin.symbol.toUpperCase()}</strong><br>
           Price: <span class="highlight-value">$${coin.current_price.toFixed(2)}</span><br>
           Market Cap: <span class="highlight-value">$${(coin.market_cap / 1e9).toFixed(2)}B</span><br>
           24h Volume: <span class="highlight-value">$${(coin.total_volume / 1e6).toFixed(2)}M</span><br>
           Rank: <span class="highlight-value">#${coin.market_cap_rank}</span><br>
-          ${taapiData.rsi ? `<span class="highlight-value">${interpretRSI(taapiData.rsi)}</span><br>` : '<span class="highlight-value">RSI: Unavailable</span><br>'}
-          ${taapiData.macd !== null ? `<span class="highlight-value">${interpretMACD(taapiData.macd, taapiData.macdSignal)}</span><br>` : '<span class="highlight-value">MACD: Unavailable</span><br>'}
-          <a href="https://www.tradingview.com/chart/?symbol=${symbol}USD" target="_blank">CHART 📈</a></p>
+          <a href="https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📈</a></p>
         `;
-      }
+      });
 
       document.getElementById("marketOverview").innerHTML = overviewHTML;
 
