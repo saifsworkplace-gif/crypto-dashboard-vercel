@@ -147,8 +147,8 @@
 
   <div class="section">
     <h2>🧠 Market Sentiment</h2>
-    <div><span class="highlight">BTC Dominance:</span> <span id="btcDominance" class="highlight-value">--%</span></div>
-    <div><span class="highlight">Fear & Greed Index:</span> <span id="fearGreed" class="highlight-value">--</span></div>
+    <div><span style="color: white;">BTC Dominance:</span> <span id="btcDominance" class="highlight-value">--%</span></div>
+    <div><span style="color: white;">Fear & Greed Index:</span> <span id="fearGreed" class="highlight-value">--</span></div>
   </div>
 
   <script>
@@ -173,32 +173,12 @@
         HBAR: "HBARUSDT"
       };
 
-      const coinGeckoIds = {
-        AVAX: "avalanche-2",
-        INJ: "injective-protocol",
-        RENDER: "render-token",
-        ADX: "adex",
-        HBAR: "hedera"
-      };
-
       const priceMap = {};
       for (let symbol in symbolMap) {
         const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbolMap[symbol]}`);
         const data = await res.json();
         priceMap[symbol] = parseFloat(data.price);
       }
-
-      const coingeckoRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${Object.values(coinGeckoIds).join(',')}`);
-      const marketData = await coingeckoRes.json();
-      const overviewMap = {};
-      marketData.forEach(coin => {
-        overviewMap[coin.symbol.toUpperCase()] = {
-          price: coin.current_price,
-          cap: coin.market_cap,
-          volume: coin.total_volume,
-          rank: coin.market_cap_rank
-        };
-      });
 
       const body = document.getElementById("portfolioBody");
       body.innerHTML = "";
@@ -238,14 +218,13 @@
       let overviewHTML = "";
       for (let symbol in priceMap) {
         const price = priceMap[symbol];
-        const market = overviewMap[symbol] || {};
         overviewHTML += `
           <p><strong>🔘 ${symbol}</strong><br>
           Price: <span class="highlight-value">$${price.toFixed(2)}</span><br>
-          Market Cap: <span class="highlight-value">$${market.cap?.toLocaleString() || '—'}</span><br>
-          24h Volume: <span class="highlight-value">$${market.volume?.toLocaleString() || '—'}</span><br>
-          Rank: <span class="highlight-value">${market.rank || '—'}</span><br>
-          <a href="https://www.coingecko.com/en/coins/${symbol.toLowerCase()}" target="_blank">CHART 📊</a></p>
+          Market Cap: <span class="highlight-value">$—</span><br>
+          24h Volume: <span class="highlight-value">$—</span><br>
+          Rank: <span class="highlight-value">—</span><br>
+          <a href="https://www.tradingview.com/symbols/${symbol}USDT" target="_blank">CHART 📊</a></p>
         `;
       }
       document.getElementById("marketOverview").innerHTML = overviewHTML;
