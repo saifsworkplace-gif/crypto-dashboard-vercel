@@ -90,22 +90,18 @@
     .market-block a {
       color: var(--accent);
       text-decoration: none;
+      margin-right: 10px;
     }
     .market-line {
       display: flex;
       justify-content: space-between;
       font-variant-numeric: tabular-nums;
-      gap: 10px;
-    }
-    .market-line span:first-child {
-      width: 140px;
-      flex-shrink: 0;
+      gap: 20px;
     }
     @media (max-width: 768px) {
       .market-line {
-        flex-direction: row;
-        justify-content: space-between;
-        font-size: 14px;
+        flex-direction: column;
+        align-items: flex-start;
         gap: 6px;
       }
     }
@@ -223,6 +219,7 @@
       const overviewBlock = document.getElementById("marketOverview");
       overviewBlock.innerHTML = '';
       marketData.forEach(coin => {
+        const mobileLink = `https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD`;
         overviewBlock.innerHTML += `
           <div class="market-block">
             <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
@@ -230,7 +227,8 @@
             <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
             <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
             <div class="market-line"><span>Rank:</span> <span>#${coin.market_cap_rank}</span></div>
-            <a href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
+            <a href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART</a>
+            <a href="${mobileLink}" target="_blank">Mobile CHART 📱</a>
           </div>
         `;
       });
