@@ -83,8 +83,8 @@
       margin-top: 30px;
     }
     .market-block {
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
       border-bottom: 1px dashed #555;
     }
     .market-block a {
@@ -95,14 +95,29 @@
       display: flex;
       justify-content: space-between;
       font-variant-numeric: tabular-nums;
-      margin: 2px 0;
       gap: 10px;
-      flex-wrap: wrap;
     }
-    @media (max-width: 480px) {
+
+    @media (max-width: 768px) {
       .market-line {
+        flex-direction: row;
+        justify-content: space-between;
+        font-size: 14px;
+      }
+      .header-controls {
         flex-direction: column;
         align-items: flex-start;
+      }
+      .refresh-btn, .theme-btn {
+        width: 100%;
+        text-align: center;
+      }
+      .main-header {
+        font-size: 22px;
+      }
+      th, td {
+        font-size: 13px;
+        padding: 8px;
       }
     }
   </style>
@@ -172,9 +187,7 @@
     ];
 
     function toggleTheme() {
-      const isLight = document.body.classList.toggle('light');
-      const btn = document.getElementById('themeToggleBtn');
-      btn.innerHTML = '🌙 Dark | Light ☀️';
+      document.body.classList.toggle('light');
     }
 
     async function loadAllData() {
@@ -223,7 +236,7 @@
       marketData.forEach(coin => {
         overviewBlock.innerHTML += `
           <div class="market-block">
-            <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
+            <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong>
             <div class="market-line"><span>Price:</span> <span>$${coin.current_price.toFixed(2)}</span></div>
             <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
             <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
