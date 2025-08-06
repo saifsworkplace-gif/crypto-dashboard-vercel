@@ -77,7 +77,7 @@
       font-weight: bold;
     }
     .highlight {
-      color: var(--text);
+      color: var(--accent);
     }
     .highlight-value {
       color: var(--accent);
@@ -86,6 +86,7 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .theme-btn, .refresh-btn {
       background-color: var(--accent);
@@ -111,6 +112,7 @@
       <div class="header-controls">
         <button class="theme-btn" onclick="toggleTheme()">🌙 Dark | Light ☀️</button>
         <button class="refresh-btn" onclick="loadAllData()">🔁 Refresh</button>
+        <div class="timestamp" id="lastUpdated">Last updated: --:--:--</div>
       </div>
     </h2>
     <div class="table-container">
@@ -136,7 +138,6 @@
         </tfoot>
       </table>
     </div>
-    <div class="timestamp" id="lastUpdated">Last updated: --:--:--</div>
   </div>
 
   <div class="section">
@@ -167,9 +168,17 @@
       const symbolMap = {
         AVAX: "AVAXUSDT",
         INJ: "INJUSDT",
-        RENDER: "RENDERUSDT",
+        RENDER: "RNDRUSDT",
         ADX: "ADXUSDT",
         HBAR: "HBARUSDT"
+      };
+
+      const coinGeckoIds = {
+        AVAX: "avalanche-2",
+        INJ: "injective-protocol",
+        RENDER: "render-token",
+        ADX: "adex",
+        HBAR: "hedera"
       };
 
       const priceMap = {};
@@ -178,6 +187,18 @@
         const data = await res.json();
         priceMap[symbol] = parseFloat(data.price);
       }
+
+      const coingeckoRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${Object.values(coinGeckoIds).join(',')}`);
+      const marketData = await coingeckoRes.json();
+      const overviewMap = {};
+      marketData.forEach(coin => {
+        overviewMap[coin.symbol.toUpperCase()] = {
+          price: coin.current_price,
+          cap: coin.market_cap,
+          volume: coin.total_volume,
+          rank: coin.market_cap_rank
+        };
+      });
 
       const body = document.getElementById("portfolioBody");
       body.innerHTML = "";
@@ -217,12 +238,13 @@
       let overviewHTML = "";
       for (let symbol in priceMap) {
         const price = priceMap[symbol];
+        const market = overviewMap[symbol] || {};
         overviewHTML += `
           <p><strong>🔘 ${symbol}</strong><br>
           Price: <span class="highlight-value">$${price.toFixed(2)}</span><br>
-          Market Cap: <span class="highlight-value">—</span><br>
-          24h Volume: <span class="highlight-value">—</span><br>
-          Rank: <span class="highlight-value">—</span><br>
+          Market Cap: <span class="highlight-value">$${market.cap?.toLocaleString() || '—'}</span><br>
+          24h Volume: <span class="highlight-value">$${market.volume?.toLocaleString() || '—'}</span><br>
+          Rank: <span class="highlight-value">${market.rank || '—'}</span><br>
           <a href="https://www.coingecko.com/en/coins/${symbol.toLowerCase()}" target="_blank">CHART 📊</a></p>
         `;
       }
