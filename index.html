@@ -144,10 +144,53 @@
   </style>
 </head>
 <body>
-  <!-- ... HTML content remains unchanged ... -->
+  <div class="section">
+    <h2>📊 Portfolio</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Coin</th>
+            <th>Qty</th>
+            <th>Entry Price</th>
+            <th>Live Price</th>
+            <th>P&L</th>
+            <th>Support | Resistance</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody id="portfolioBody"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="4">Total P&L</td>
+            <td id="totalPnl" colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="timestamp" id="lastUpdated">Last updated: --:--:--</div>
+  </div>
+
+  <div class="section">
+    <h2>📈 Market Overview</h2>
+    <div id="marketOverview"></div>
+  </div>
+
+  <div class="section">
+    <h2>🧠 Market Sentiment</h2>
+    <div id="btcDominance">BTC Dominance: --%</div>
+    <div id="fearGreed">Index: --</div>
+  </div>
 
   <script>
-    // Patch API with error handling and new proxy
+    const portfolio = [
+      { symbol: "AVAX", qty: 10, entry: 30, support: 25.3, resistance: 27 },
+      { symbol: "INJ", qty: 5, entry: 22, support: 15.1, resistance: 16 },
+      { symbol: "RENDER", qty: 20, entry: 2.1, support: 4.4, resistance: 4.95 },
+      { symbol: "ADX", qty: 100, entry: 0.12, support: 0.105, resistance: 0.113 },
+      { symbol: "HBAR", qty: 300, entry: 0.2, support: 0.27, resistance: 0.29 }
+    ];
+
     async function fetchJsonWithProxy(url) {
       try {
         const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
@@ -172,6 +215,7 @@
       if (!marketData || !priceData) return;
 
       const body = document.getElementById('portfolioBody');
+      if (!body) return;
       body.innerHTML = '';
       let totalPnl = 0;
       portfolio.forEach((c, i) => {
@@ -194,42 +238,49 @@
         body.innerHTML += row;
       });
 
-      document.getElementById("totalPnl").innerHTML =
-        totalPnl >= 0
-          ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
-          : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+      const totalPnlElem = document.getElementById("totalPnl");
+      if (totalPnlElem) {
+        totalPnlElem.innerHTML =
+          totalPnl >= 0
+            ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
+            : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+      }
 
-      document.getElementById("lastUpdated").textContent =
-        `Last updated: ${new Date().toLocaleTimeString()}`;
+      const lastUpdated = document.getElementById("lastUpdated");
+      if (lastUpdated) {
+        lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+      }
 
       const overviewBlock = document.getElementById("marketOverview");
-      overviewBlock.innerHTML = '';
-      marketData.forEach(coin => {
-        const mobileLink = `https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD`;
-        overviewBlock.innerHTML += `
-          <div class="market-block">
-            <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
-            <div class="market-line"><span>Price:</span> <span>$${coin.current_price.toFixed(2)}</span></div>
-            <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
-            <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
-            <div class="market-line"><span>Rank:</span> <span>#${coin.market_cap_rank}</span></div>
-            <a class="desktop-chart" href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
-            <a class="mobile-chart" href="${mobileLink}" target="_blank">Mobile CHART 📱</a>
-          </div>
-        `;
-      });
+      if (overviewBlock) {
+        overviewBlock.innerHTML = '';
+        marketData.forEach(coin => {
+          const mobileLink = `https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD`;
+          overviewBlock.innerHTML += `
+            <div class="market-block">
+              <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
+              <div class="market-line"><span>Price:</span> <span>$${coin.current_price.toFixed(2)}</span></div>
+              <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
+              <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
+              <div class="market-line"><span>Rank:</span> <span>#${coin.market_cap_rank}</span></div>
+              <a class="desktop-chart" href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
+              <a class="mobile-chart" href="${mobileLink}" target="_blank">Mobile CHART 📱</a>
+            </div>
+          `;
+        });
+      }
 
       const domData = await fetchJsonWithProxy(`https://api.coingecko.com/api/v3/global`);
       if (domData) {
-        document.getElementById("btcDominance").textContent =
-          `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
+        const btcElem = document.getElementById("btcDominance");
+        if (btcElem) btcElem.textContent = `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
       }
 
       const fgData = await fetchJsonWithProxy(`https://api.alternative.me/fng/`);
       if (fgData) {
         const fg = fgData.data[0];
-        document.getElementById("fearGreed").textContent =
-          `Index: ${fg.value} (${fg.value_classification})`;
+        const fgElem = document.getElementById("fearGreed");
+        if (fgElem) fgElem.textContent = `Index: ${fg.value} (${fg.value_classification})`;
       }
     }
 
