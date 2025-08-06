@@ -85,6 +85,15 @@
       color: var(--accent);
       margin-top: 30px;
     }
+    .market-block {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #555;
+    }
+    .market-block a {
+      color: var(--accent);
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -110,9 +119,7 @@
           <th>Support | Resistance</th>
         </tr>
       </thead>
-      <tbody id="portfolioBody">
-        <!-- Filled by JS -->
-      </tbody>
+      <tbody id="portfolioBody"></tbody>
     </table>
     <div id="totalPnl" class="total-pnl"></div>
   </div>
@@ -120,7 +127,7 @@
   <div class="section">
     <h2>📊 Market Overview</h2>
     <hr>
-    <div id="marketOverview">Loading...</div>
+    <div id="marketOverview"></div>
   </div>
 
   <div class="section">
@@ -149,19 +156,21 @@
     }
 
     async function loadAllData() {
-      const ids = [
-        'avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'
-      ];
+      const ids = ['avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'];
       const symbolToId = {
         AVAX: 'avalanche-2', INJ: 'injective-protocol', RENDER: 'render-token', ADX: 'adex', HBAR: 'hedera-hashgraph'
       };
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`);
-      const data = await res.json();
+      const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`);
+      const marketData = await res.json();
+
+      const priceDataRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids.join(',') + "&vs_currencies=usd");
+      const priceData = await priceDataRes.json();
+
       const body = document.getElementById('portfolioBody');
       body.innerHTML = '';
       let totalPnl = 0;
       portfolio.forEach(c => {
-        const live = data[symbolToId[c.symbol]].usd;
+        const live = priceData[symbolToId[c.symbol]].usd;
         const pnl = (live - c.entry) * c.qty;
         totalPnl += pnl;
         const pnlPercent = (pnl / (c.entry * c.qty)) * 100;
@@ -178,19 +187,24 @@
         `;
         body.innerHTML += row;
       });
-      const totalText = totalPnl >= 0
-        ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
-        : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+      const totalText = totalPnl >= 0 ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>` : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
       document.getElementById("totalPnl").innerHTML = `Total P&L: ${totalText}`;
       document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 
-      const marketHtml = portfolio.map(c => {
-        const id = symbolToId[c.symbol];
-        const change = data[id].usd_24h_change?.toFixed(2) || '0.00';
-        const price = data[id].usd.toFixed(2);
-        return `<div>${c.symbol}: $${price} (${change}%)</div>`;
-      }).join('');
-      document.getElementById("marketOverview").innerHTML = marketHtml;
+      const overviewBlock = document.getElementById("marketOverview");
+      overviewBlock.innerHTML = '';
+      marketData.forEach(coin => {
+        overviewBlock.innerHTML += `
+          <div class="market-block">
+            <strong>${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
+            Price: $${coin.current_price.toFixed(2)}<br>
+            Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B<br>
+            24h Volume: $${(coin.total_volume / 1e6).toFixed(2)}M<br>
+            Rank: #${coin.market_cap_rank}<br>
+            <a href="https://www.tradingview.com/symbols/${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
+          </div>
+        `;
+      });
 
       const domRes = await fetch("https://api.coingecko.com/api/v3/global");
       const domData = await domRes.json();
