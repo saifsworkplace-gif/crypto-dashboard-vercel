@@ -134,9 +134,60 @@
       transform: translateX(0);
       background-image: url('https://cdn-icons-png.flaticon.com/512/6714/6714978.png');
     }
+      .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--card);
+      padding: 15px 30px;
+      border-bottom: 1px solid var(--accent);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+    .nav-logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .nav-links {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
+  <nav class="navbar">
+    <div class="nav-logo">mycryptopanel</div>
+    <ul class="nav-links">
+      <li><a href="#portfolio">Portfolio</a></li>
+      <li><a href="#market">Market Overview</a></li>
+      <li><a href="#swap">Swap</a></li>
+    </ul>
+  </nav>
   <header> 💵 🚀 Dashboard 🚀 💵 </header>
   <div class="section">
     <h2>
