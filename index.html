@@ -140,7 +140,7 @@
 
   <div class="section">
     <h2>📈 Market Overview</h2>
-    <div id="marketOverview"></div>
+    <div id="marketOverview">Loading...</div>
   </div>
 
   <div class="section">
@@ -209,6 +209,31 @@
 
       document.getElementById("lastUpdated").textContent =
         `Last updated: ${new Date().toLocaleTimeString()}`;
+
+      try {
+        const btcRes = await fetch("https://api.coingecko.com/api/v3/global");
+        const btcData = await btcRes.json();
+        document.getElementById("btcDominance").textContent = `${btcData.data.market_cap_percentage.btc.toFixed(2)}%`;
+      } catch (e) {
+        document.getElementById("btcDominance").textContent = "--%";
+      }
+
+      try {
+        const fearRes = await fetch("https://api.alternative.me/fng/");
+        const fearData = await fearRes.json();
+        document.getElementById("fearGreed").textContent = `${fearData.data[0].value} (${fearData.data[0].value_classification})`;
+      } catch (e) {
+        document.getElementById("fearGreed").textContent = "--";
+      }
+
+      document.getElementById("marketOverview").innerHTML = `
+        <p><strong>🔘 Hedera (HBAR)</strong><br>
+        Price: <span class="highlight-value">$0.24</span><br>
+        Market Cap: <span class="highlight-value">$10.17B</span><br>
+        24h Volume: <span class="highlight-value">$353.13M</span><br>
+        Rank: <span class="highlight-value">#20</span><br>
+        <a href="https://www.coingecko.com/en/coins/hedera" target="_blank">CHART 📊</a></p>
+      `;
     }
 
     function updateValue(index, value, field) {
