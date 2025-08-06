@@ -105,10 +105,10 @@
   </style>
 </head>
 <body>
-  <header> 💵 🚀 Dashboard 🚀 💵 </header>
+  <header>📈 Crypto Portfolio Dashboard</header>
   <div class="section">
     <h2>
-      🏦 Portfolio
+      📊 Portfolio
       <div class="header-controls">
         <button class="theme-btn" onclick="toggleTheme()">🌙 Dark | Light ☀️</button>
         <button class="refresh-btn" onclick="loadAllData()">🔁 Refresh</button>
@@ -164,28 +164,53 @@
       document.body.classList.toggle("light");
     }
 
+    function generateRsiText(value) {
+      let signal = '', text = '';
+      if (value < 30) {
+        signal = 'Oversold';
+        text = '🟢 Possible bounce incoming';
+      } else if (value < 50) {
+        signal = 'Neutral / Weak';
+        text = '⚪ Sideways or early signs forming';
+      } else if (value < 70) {
+        signal = 'Bullish momentum';
+        text = '🟠 Trend gaining strength';
+      } else {
+        signal = 'Overbought';
+        text = '🔴 Caution: Overbought zone';
+      }
+      return `${value.toFixed(2)} — ${signal} | ${text}`;
+    }
+
+    function generateMacdText(value) {
+      let signal = '', text = '';
+      if (value > 0) {
+        signal = 'Bullish crossover';
+        text = '🟢 Momentum turning up';
+      } else if (value < 0) {
+        signal = 'Bearish signal';
+        text = '🔴 Downtrend gaining speed';
+      } else {
+        signal = 'Flat';
+        text = '⚪ Neutral signal';
+      }
+      return `${value >= 0 ? '+' : ''}${value.toFixed(4)} — ${signal} | ${text}`;
+    }
+
+    async function fetchTaapiIndicators(symbol) {
+      const [rsi, macd] = await Promise.all([
+        fetch(`https://api.taapi.io/rsi?secret=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbHVlIjoiNjg5Mzc3YTg4MDZmZjE2NTFlMTJkZGU2IiwiaWF0IjoxNzU0NDk0ODg4LCJleHAiOjMzMjU4OTU4ODg4fQ.xprHBi426shWP8Bp6OjC7ePXdYvRcR4-rH3iCcHBj3Y&exchange=binance&symbol=${symbol}/USDT&interval=1h`).then(res => res.json()),
+        fetch(`https://api.taapi.io/macd?secret=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbHVlIjoiNjg5Mzc3YTg4MDZmZjE2NTFlMTJkZGU2IiwiaWF0IjoxNzU0NDk0ODg4LCJleHAiOjMzMjU4OTU4ODg4fQ.xprHBi426shWP8Bp6OjC7ePXdYvRcR4-rH3iCcHBj3Y&exchange=binance&symbol=${symbol}/USDT&interval=1h`).then(res => res.json())
+      ]);
+      return { rsi: rsi.value, macd: macd.valueMACD - macd.valueSignal };
+    }
+
     async function loadAllData() {
-      const symbolMap = {
-        AVAX: "AVAXUSDT",
-        INJ: "INJUSDT",
-        RENDER: "RENDERUSDT",
-        ADX: "ADXUSDT",
-        HBAR: "HBARUSDT"
-      };
-
-      const idMap = {
-        AVAX: "avalanche-2",
-        INJ: "injective-protocol",
-        RENDER: "render-token",
-        ADX: "adex",
-        HBAR: "hedera-hashgraph"
-      };
-
       const priceMap = {};
-      for (let symbol in symbolMap) {
-        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbolMap[symbol]}`);
+      for (let coin of portfolio) {
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${coin.symbol}USDT`);
         const data = await res.json();
-        priceMap[symbol] = parseFloat(data.price);
+        priceMap[coin.symbol] = parseFloat(data.price);
       }
 
       const body = document.getElementById("portfolioBody");
@@ -220,25 +245,25 @@
       document.getElementById("lastUpdated").textContent =
         `Last updated: ${new Date().toLocaleTimeString()}`;
 
-      const marketRes = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=" + Object.values(idMap).join(","));
-      const marketData = await marketRes.json();
-
-      let overviewHTML = "";
-      marketData.forEach(coin => {
-        overviewHTML += `
-          <p><strong>🔘 ${coin.symbol.toUpperCase()}</strong><br>
-          Price: <span class="highlight-value">$${coin.current_price.toFixed(2)}</span><br>
-          Market Cap: <span class="highlight-value">$${(coin.market_cap / 1e9).toFixed(2)}B</span><br>
-          24h Volume: <span class="highlight-value">$${(coin.total_volume / 1e6).toFixed(2)}M</span><br>
-          Rank: <span class="highlight-value">#${coin.market_cap_rank}</span><br>
-          <a href="https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📈</a></p>
-        `;
-      });
-
-      document.getElementById("marketOverview").innerHTML = overviewHTML;
-
       document.getElementById("btcDominance").textContent = "59.92%";
       document.getElementById("fearGreed").textContent = "54 (Neutral)";
+
+      let overviewHTML = "";
+      for (let symbol in priceMap) {
+        const price = priceMap[symbol];
+        const { rsi, macd } = await fetchTaapiIndicators(symbol);
+        overviewHTML += `
+          <p><strong>🔘 ${symbol}</strong><br>
+          Price: <span class="highlight-value">$${price.toFixed(2)}</span><br>
+          RSI: ${generateRsiText(rsi)}<br>
+          MACD: ${generateMacdText(macd)}<br>
+          Market Cap: <span class="highlight-value">Unavailable</span><br>
+          24h Volume: <span class="highlight-value">Unavailable</span><br>
+          Rank: <span class="highlight-value">Unavailable</span><br>
+          <a href="https://www.tradingview.com/chart/?symbol=${symbol}USD" target="_blank">CHART 📊</a></p>
+        `;
+      }
+      document.getElementById("marketOverview").innerHTML = overviewHTML;
     }
 
     function updateValue(index, value, field) {
