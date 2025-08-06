@@ -173,6 +173,14 @@
         HBAR: "HBARUSDT"
       };
 
+      const idMap = {
+        AVAX: "avalanche-2",
+        INJ: "injective-protocol",
+        RENDER: "render-token",
+        ADX: "adex",
+        HBAR: "hedera-hashgraph"
+      };
+
       const priceMap = {};
       for (let symbol in symbolMap) {
         const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbolMap[symbol]}`);
@@ -212,22 +220,25 @@
       document.getElementById("lastUpdated").textContent =
         `Last updated: ${new Date().toLocaleTimeString()}`;
 
-      document.getElementById("btcDominance").textContent = "59.92%";
-      document.getElementById("fearGreed").textContent = "54 (Neutral)";
+      const marketRes = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=" + Object.values(idMap).join(","));
+      const marketData = await marketRes.json();
 
       let overviewHTML = "";
-      for (let symbol in priceMap) {
-        const price = priceMap[symbol];
+      marketData.forEach(coin => {
         overviewHTML += `
-          <p><strong>🔘 ${symbol}</strong><br>
-          Price: <span class="highlight-value">$${price.toFixed(2)}</span><br>
-          Market Cap: <span class="highlight-value">Unavailable</span><br>
-          24h Volume: <span class="highlight-value">Unavailable</span><br>
-          Rank: <span class="highlight-value">Unavailable</span><br>
-          <a href="https://www.tradingview.com/chart/?symbol=${symbol}USD" target="_blank">CHART 📊</a></p>
+          <p><strong>🔘 ${coin.symbol.toUpperCase()}</strong><br>
+          Price: <span class="highlight-value">$${coin.current_price.toFixed(2)}</span><br>
+          Market Cap: <span class="highlight-value">$${(coin.market_cap / 1e9).toFixed(2)}B</span><br>
+          24h Volume: <span class="highlight-value">$${(coin.total_volume / 1e6).toFixed(2)}M</span><br>
+          Rank: <span class="highlight-value">#${coin.market_cap_rank}</span><br>
+          <a href="https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a></p>
         `;
-      }
+      });
+
       document.getElementById("marketOverview").innerHTML = overviewHTML;
+
+      document.getElementById("btcDominance").textContent = "59.92%";
+      document.getElementById("fearGreed").textContent = "54 (Neutral)";
     }
 
     function updateValue(index, value, field) {
