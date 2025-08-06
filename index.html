@@ -91,6 +91,11 @@
       color: var(--accent);
       text-decoration: none;
     }
+    .market-line {
+      display: flex;
+      justify-content: space-between;
+      font-variant-numeric: tabular-nums;
+    }
   </style>
 </head>
 <body>
@@ -160,7 +165,7 @@
     function toggleTheme() {
       const isLight = document.body.classList.toggle('light');
       const btn = document.getElementById('themeToggleBtn');
-      btn.innerHTML = isLight ? '🌙 Dark | Light ☀️' : '🌙 Dark | Light ☀️'; // Always show both
+      btn.innerHTML = '🌙 Dark | Light ☀️';
     }
 
     async function loadAllData() {
@@ -210,10 +215,10 @@
         overviewBlock.innerHTML += `
           <div class="market-block">
             <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
-            Price: $${coin.current_price.toFixed(2)}<br>
-            Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B<br>
-            24h Volume: $${(coin.total_volume / 1e6).toFixed(2)}M<br>
-            Rank: #${coin.market_cap_rank}<br>
+            <div class="market-line"><span>Price:</span> <span>$${coin.current_price.toFixed(2)}</span></div>
+            <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
+            <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
+            <div class="market-line"><span>Rank:</span> <span>#${coin.market_cap_rank}</span></div>
             <a href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
           </div>
         `;
