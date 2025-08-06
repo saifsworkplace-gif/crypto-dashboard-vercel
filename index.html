@@ -196,12 +196,12 @@
       marketData.forEach(coin => {
         overviewBlock.innerHTML += `
           <div class="market-block">
-            <strong>${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
+            <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
             Price: $${coin.current_price.toFixed(2)}<br>
             Market Cap: $${(coin.market_cap / 1e9).toFixed(2)}B<br>
             24h Volume: $${(coin.total_volume / 1e6).toFixed(2)}M<br>
             Rank: #${coin.market_cap_rank}<br>
-            <a href="https://www.tradingview.com/symbols/${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
+            <a href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
           </div>
         `;
       });
