@@ -39,14 +39,19 @@
       align-items: center;
       margin: 0;
     }
+    .table-container {
+      overflow-x: auto;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      min-width: 600px;
     }
     th, td {
       padding: 12px;
       text-align: center;
+      white-space: nowrap;
     }
     th {
       color: var(--accent);
@@ -119,6 +124,19 @@
         display: inline;
       }
     }
+    .back-to-top {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 10px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
@@ -133,29 +151,31 @@
         <span class="timestamp" id="lastUpdated">Last updated: --</span>
       </div>
     </h2>
-    <table id="portfolioTable">
-      <thead>
-        <tr>
-          <th>Coin</th>
-          <th>Qty</th>
-          <th>Entry Price</th>
-          <th>Live Price</th>
-          <th>P&L</th>
-          <th>Support | Resistance</th>
-        </tr>
-      </thead>
-      <tbody id="portfolioBody"></tbody>
-      <tfoot>
-        <tr class="total-row">
-          <td>Total P&L:</td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td id="totalPnl"></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
+    <div class="table-container">
+      <table id="portfolioTable">
+        <thead>
+          <tr>
+            <th>Coin</th>
+            <th>Qty</th>
+            <th>Entry Price</th>
+            <th>Live Price</th>
+            <th>P&L</th>
+            <th>Support | Resistance</th>
+          </tr>
+        </thead>
+        <tbody id="portfolioBody"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td>Total P&L:</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td id="totalPnl"></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </div>
 
   <div class="section">
@@ -175,6 +195,8 @@
     <hr>
     <div id="fearGreed">Loading...</div>
   </div>
+
+  <button class="back-to-top" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">⬆ Top</button>
 
   <script>
     const portfolio = [
