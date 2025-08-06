@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crypto Portfolio Tracker</title>
+  <title>Crypto Portfolio Table</title>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -32,13 +32,6 @@
       border-radius: 20px;
       padding: 20px;
     }
-    .main-header {
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--accent);
-      margin-top: 30px;
-    }
     h2 {
       color: var(--accent);
       display: flex;
@@ -46,6 +39,21 @@
       align-items: center;
       margin: 0;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
     .header-controls {
       display: flex;
       align-items: center;
@@ -64,39 +72,17 @@
       font-size: 12px;
       color: gray;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
+    .total-row {
+      font-weight: bold;
     }
-    th, td {
-      padding: 12px;
+    .main-header {
       text-align: center;
-    }
-    th {
+      font-size: 28px;
+      font-weight: bold;
       color: var(--accent);
-      border-bottom: 2px solid var(--accent);
-    }
-    .green { color: var(--green); }
-    .red { color: var(--red); }
-    .total-pnl-label {
-      text-align: left;
-      font-weight: bold;
-      font-size: 18px;
-      padding-top: 15px;
-    }
-    .total-pnl-value {
-      text-align: center;
-      font-weight: bold;
-      font-size: 18px;
-      padding-top: 15px;
+      margin-top: 30px;
     }
     .market-block {
-      display: grid;
-      grid-template-columns: auto auto;
-      gap: 6px 30px;
-      align-items: center;
-      font-variant-numeric: tabular-nums;
       margin-bottom: 20px;
       padding-bottom: 10px;
       border-bottom: 1px dashed #555;
@@ -105,24 +91,26 @@
       color: var(--accent);
       text-decoration: none;
     }
-    .market-block .coin-title {
-      grid-column: span 2;
-      font-weight: bold;
-      font-size: 1.1em;
+    .market-line {
+      display: flex;
+      justify-content: space-between;
+      font-variant-numeric: tabular-nums;
     }
   </style>
 </head>
 <body>
   <div class="main-header">🚀 Crypto Trading Tracker</div>
+
   <div class="section">
-    <h2>💼 Portfolio
+    <h2>
+      💼 Portfolio
       <div class="header-controls">
-        <button class="theme-btn">🌙 Dark | Light ☀️</button>
-        <button class="refresh-btn">Refresh</button>
-        <span class="timestamp">Last updated: 06:00:00</span>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeToggleBtn">🌙 Dark | Light ☀️</button>
+        <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
+        <span class="timestamp" id="lastUpdated">Last updated: --</span>
       </div>
     </h2>
-    <table>
+    <table id="portfolioTable">
       <thead>
         <tr>
           <th>Coin</th>
@@ -133,58 +121,122 @@
           <th>Support | Resistance</th>
         </tr>
       </thead>
-      <tbody>
-        <tr><td>AVAX</td><td>115.51</td><td>$25.96</td><td>$21.90</td><td class="red">-$468.97 / -15.64%</td><td>S: 25.3 | R: 27</td></tr>
-        <tr><td>INJ</td><td>130.07</td><td>$15.35</td><td>$12.84</td><td class="red">-$325.83 / -16.32%</td><td>S: 15.1 | R: 16</td></tr>
-        <tr><td>RENDER</td><td>215.62</td><td>$4.63</td><td>$3.51</td><td class="red">-$242.15 / -24.24%</td><td>S: 4.4 | R: 4.95</td></tr>
-        <tr><td>ADX</td><td>9132.00</td><td>$0.11</td><td>$0.12</td><td class="green">+$98.48 / 9.85%</td><td>S: 0.105 | R: 0.113</td></tr>
-        <tr><td>HBAR</td><td>3546.82</td><td>$0.28</td><td>$0.24</td><td class="red">-$153.90 / -15.41%</td><td>S: 0.27 | R: 0.29</td></tr>
-        <tr><td class="total-pnl-label">Total P&L:</td><td colspan="3"></td><td class="total-pnl-value red">-$1092.36</td><td></td></tr>
-      </tbody>
+      <tbody id="portfolioBody"></tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td>Total P&L:</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td id="totalPnl"></td>
+          <td></td>
+        </tr>
+      </tfoot>
     </table>
   </div>
+
   <div class="section">
     <h2>📊 Market Overview</h2>
-    <div class="market-block">
-      <div class="coin-title">🟤 Hedera (HBAR)</div>
-      <div>Price:</div><div>$0.24</div>
-      <div>Market Cap:</div><div>$10.08B</div>
-      <div>24h Volume:</div><div>$341.81M</div>
-      <div>Rank:</div><div>#20</div>
-      <div>📈 <a href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=BINANCE:HBARUSD" target="_blank">CHART</a></div>
-    </div>
-    <div class="market-block">
-      <div class="coin-title">🔴 Avalanche (AVAX)</div>
-      <div>Price:</div><div>$21.91</div>
-      <div>Market Cap:</div><div>$9.25B</div>
-      <div>24h Volume:</div><div>$436.90M</div>
-      <div>Rank:</div><div>#23</div>
-      <div>📈 <a href="https://www.tradingview.com/chart/?symbol=BINANCE:AVAXUSDT" target="_blank">CHART</a></div>
-    </div>
-    <div class="market-block">
-      <div class="coin-title">🔴 Render (RENDER)</div>
-      <div>Price:</div><div>$3.51</div>
-      <div>Market Cap:</div><div>$1.82B</div>
-      <div>24h Volume:</div><div>$69.38M</div>
-      <div>Rank:</div><div>#67</div>
-      <div>📈 <a href="https://www.tradingview.com/chart/?symbol=BINANCE:RNDRUSDT" target="_blank">CHART</a></div>
-    </div>
-    <div class="market-block">
-      <div class="coin-title">🔵 Injective (INJ)</div>
-      <div>Price:</div><div>$12.84</div>
-      <div>Market Cap:</div><div>$1.12B</div>
-      <div>24h Volume:</div><div>$97.48M</div>
-      <div>Rank:</div><div>#45</div>
-      <div>📈 <a href="https://www.tradingview.com/chart/?symbol=BINANCE:INJUSDT" target="_blank">CHART</a></div>
-    </div>
-    <div class="market-block">
-      <div class="coin-title">🟢 AdEx (ADX)</div>
-      <div>Price:</div><div>$0.12</div>
-      <div>Market Cap:</div><div>$17.4M</div>
-      <div>24h Volume:</div><div>$5.6M</div>
-      <div>Rank:</div><div>#895</div>
-      <div>📈 <a href="https://www.tradingview.com/chart/?symbol=BINANCE:ADXUSDT" target="_blank">CHART</a></div>
-    </div>
+    <hr>
+    <div id="marketOverview"></div>
   </div>
+
+  <div class="section">
+    <h2>👑 BTC Dominance</h2>
+    <hr>
+    <div id="btcDominance">Loading...</div>
+  </div>
+
+  <div class="section">
+    <h2>😨 Fear & Greed Index</h2>
+    <hr>
+    <div id="fearGreed">Loading...</div>
+  </div>
+
+  <script>
+    const portfolio = [
+      { symbol: "AVAX", qty: 115.51, entry: 25.96, support: 25.3, resistance: 27 },
+      { symbol: "INJ", qty: 130.07, entry: 15.345, support: 15.1, resistance: 16 },
+      { symbol: "RENDER", qty: 215.624, entry: 4.633, support: 4.4, resistance: 4.95 },
+      { symbol: "ADX", qty: 9132, entry: 0.1095, support: 0.105, resistance: 0.113 },
+      { symbol: "HBAR", qty: 3546.82, entry: 0.28164, support: 0.27, resistance: 0.29 }
+    ];
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light');
+      const btn = document.getElementById('themeToggleBtn');
+      btn.innerHTML = '🌙 Dark | Light ☀️';
+    }
+
+    async function loadAllData() {
+      const ids = ['avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'];
+      const symbolToId = {
+        AVAX: 'avalanche-2', INJ: 'injective-protocol', RENDER: 'render-token', ADX: 'adex', HBAR: 'hedera-hashgraph'
+      };
+      const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`);
+      const marketData = await res.json();
+
+      const priceDataRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids.join(',') + "&vs_currencies=usd");
+      const priceData = await priceDataRes.json();
+
+      const body = document.getElementById('portfolioBody');
+      body.innerHTML = '';
+      let totalPnl = 0;
+      portfolio.forEach(c => {
+        const live = priceData[symbolToId[c.symbol]].usd;
+        const pnl = (live - c.entry) * c.qty;
+        totalPnl += pnl;
+        const pnlPercent = (pnl / (c.entry * c.qty)) * 100;
+        const pnlClass = pnl >= 0 ? 'green' : 'red';
+        const row = `
+          <tr>
+            <td>${c.symbol}</td>
+            <td>${c.qty.toFixed(2)}</td>
+            <td>$${c.entry.toFixed(2)}</td>
+            <td>$${live.toFixed(2)}</td>
+            <td class="${pnlClass}">${pnl >= 0 ? '+' : '-'}$${Math.abs(pnl).toFixed(2)} / ${pnlPercent.toFixed(2)}%</td>
+            <td>S: ${c.support} | R: ${c.resistance}</td>
+          </tr>
+        `;
+        body.innerHTML += row;
+      });
+
+      document.getElementById("totalPnl").innerHTML =
+        totalPnl >= 0
+          ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
+          : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+
+      document.getElementById("lastUpdated").textContent =
+        `Last updated: ${new Date().toLocaleTimeString()}`;
+
+      const overviewBlock = document.getElementById("marketOverview");
+      overviewBlock.innerHTML = '';
+      marketData.forEach(coin => {
+        overviewBlock.innerHTML += `
+          <div class="market-block">
+            <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
+            <div class="market-line"><span>Price:</span> <span>$${coin.current_price.toFixed(2)}</span></div>
+            <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
+            <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
+            <div class="market-line"><span>Rank:</span> <span>#${coin.market_cap_rank}</span></div>
+            <a href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
+          </div>
+        `;
+      });
+
+      const domRes = await fetch("https://api.coingecko.com/api/v3/global");
+      const domData = await domRes.json();
+      document.getElementById("btcDominance").textContent =
+        `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
+
+      const fgRes = await fetch("https://api.alternative.me/fng/");
+      const fgData = await fgRes.json();
+      const fg = fgData.data[0];
+      document.getElementById("fearGreed").textContent =
+        `Index: ${fg.value} (${fg.value_classification})`;
+    }
+
+    loadAllData();
+  </script>
 </body>
 </html>
