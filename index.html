@@ -128,8 +128,10 @@
         <tbody id="portfolioBody"></tbody>
         <tfoot>
           <tr class="total-row">
-            <td colspan="4" style="color: var(--accent);">Total P&L:</td>
-            <td id="totalPnl" colspan="2"></td>
+            <td class="highlight">Total P&L:</td>
+            <td colspan="3"></td>
+            <td id="totalPnl"></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
@@ -201,27 +203,30 @@
         body.innerHTML += row;
       });
 
-      const pnlClass = totalPnl >= 0 ? "green" : "red";
       document.getElementById("totalPnl").innerHTML =
-        `<span class='${pnlClass}'>${totalPnl >= 0 ? '+' : '-'}$${Math.abs(totalPnl).toFixed(2)}</span>`;
+        totalPnl >= 0
+          ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
+          : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
 
       document.getElementById("lastUpdated").textContent =
         `Last updated: ${new Date().toLocaleTimeString()}`;
 
-      const marketHtml = Object.keys(priceMap).map(key => {
-        return `<p><strong>🔘 ${key}</strong><br>
-          Price: <span class="highlight-value">$${priceMap[key].toFixed(2)}</span><br>
-          <a href="https://www.coingecko.com/en/coins/${key.toLowerCase()}" target="_blank">CHART 📊</a></p>`;
-      }).join("");
-      document.getElementById("marketOverview").innerHTML = marketHtml;
+      document.getElementById("btcDominance").textContent = "59.92%";
+      document.getElementById("fearGreed").textContent = "54 (Neutral)";
 
-      const btcRes = await fetch("https://api.coingecko.com/api/v3/global");
-      const btcData = await btcRes.json();
-      document.getElementById("btcDominance").textContent = `${btcData.data.market_cap_percentage.btc.toFixed(2)}%`;
-
-      const fgRes = await fetch("https://api.alternative.me/fng/");
-      const fgData = await fgRes.json();
-      document.getElementById("fearGreed").textContent = `${fgData.data[0].value} (${fgData.data[0].value_classification})`;
+      let overviewHTML = "";
+      for (let symbol in priceMap) {
+        const price = priceMap[symbol];
+        overviewHTML += `
+          <p><strong>🔘 ${symbol}</strong><br>
+          Price: <span class="highlight-value">$${price.toFixed(2)}</span><br>
+          Market Cap: <span class="highlight-value">—</span><br>
+          24h Volume: <span class="highlight-value">—</span><br>
+          Rank: <span class="highlight-value">—</span><br>
+          <a href="https://www.coingecko.com/en/coins/${symbol.toLowerCase()}" target="_blank">CHART 📊</a></p>
+        `;
+      }
+      document.getElementById("marketOverview").innerHTML = overviewHTML;
     }
 
     function updateValue(index, value, field) {
