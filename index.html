@@ -3,239 +3,146 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crypto Dashboard</title>
+  <title>Crypto Portfolio Table</title>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-color: #121124;
-      --section-color: #1c1b36;
-      --text-color: #fff;
-      --accent-color: #ffa726;
+      --bg: #121124;
+      --card: #1c1b36;
+      --text: #ffffff;
+      --accent: #ffa726;
+      --green: #00c27e;
+      --red: #ff6666;
     }
-
     body.light {
-      --bg-color: #f2f2f2;
-      --section-color: #ffffff;
-      --text-color: #000;
-      --accent-color: #ff9800;
+      --bg: #f2f2f2;
+      --card: #ffffff;
+      --text: #000000;
     }
-
     body {
       font-family: 'Fira Mono', monospace;
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      background-color: var(--bg);
+      color: var(--text);
       margin: 0;
       padding: 0;
-      transition: all 0.3s ease;
     }
-
     .section {
-      background-color: var(--section-color);
-      border-radius: 20px;
-      padding: 20px 20px 10px 20px;
+      background: var(--card);
       margin: 20px;
+      border-radius: 20px;
+      padding: 20px;
     }
-
     h2 {
-      color: var(--accent-color);
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+    .header-controls {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 0;
     }
-
-    hr {
-      border: none;
-      border-top: 3px solid var(--accent-color);
-      margin: 10px 0 20px 0;
-    }
-
-    .refresh-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 10px;
-      margin-bottom: 0;
-    }
-
     .refresh-btn, .theme-btn {
-      background-color: var(--accent-color);
-      color: var(--bg-color);
+      background-color: var(--accent);
+      color: var(--bg);
+      padding: 5px 10px;
       border: none;
-      padding: 5px 15px;
-      cursor: pointer;
       border-radius: 5px;
+      cursor: pointer;
       font-weight: bold;
-      margin-left: 10px;
     }
-
     .timestamp {
       font-size: 12px;
       color: gray;
-      margin-left: 15px;
-    }
-
-    .portfolio-table {
-      width: 100%;
-      margin-bottom: 0;
-    }
-
-    .coin-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      white-space: pre;
-    }
-
-    .green { color: #00c27e; }
-    .red { color: #ff6666; }
-
-    .total-pnl {
-      text-align: right;
-      font-weight: bold;
-      font-size: 18px;
-      margin-top: 10px;
-      margin-bottom: 5px;
-    }
-
-    .main-header {
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--accent-color);
-      margin-top: 30px;
-    }
-
-    .market-overview .market-line {
-      margin-bottom: 6px;
     }
   </style>
 </head>
 <body>
-  <!-- 🚀 Main Title -->
-  <div class="main-header">🚀 Crypto Trading Tracker</div>
-
-  <!-- Portfolio Section -->
   <div class="section">
-    <div class="refresh-container">
-      <h2>💼 Your Portfolio</h2>
-      <div>
+    <h2>
+      💼 Your Portfolio
+      <div class="header-controls">
         <button class="refresh-btn" onclick="loadAllData()">Refresh</button>
         <button class="theme-btn" onclick="toggleTheme()">Toggle Theme</button>
         <span class="timestamp" id="lastUpdated">Last updated: --</span>
       </div>
-    </div>
-    <hr>
-    <div id="portfolio" class="portfolio-table">Loading...</div>
-    <div id="totalPnl" class="total-pnl"></div>
-  </div>
-
-  <!-- Market Overview -->
-  <div class="section">
-    <h2>📊 Market Overview</h2>
-    <hr>
-    <div id="marketOverview" class="market-overview">Loading...</div>
-  </div>
-
-  <!-- BTC Dominance -->
-  <div class="section">
-    <h2>👑 BTC Dominance</h2>
-    <hr>
-    <div id="btcDominance">Loading...</div>
-  </div>
-
-  <!-- Fear & Greed Index -->
-  <div class="section">
-    <h2>😨 Fear & Greed Index</h2>
-    <hr>
-    <div id="fearGreed">Loading...</div>
+    </h2>
+    <table id="portfolioTable">
+      <thead>
+        <tr>
+          <th>Coin</th>
+          <th>Qty</th>
+          <th>Entry Price</th>
+          <th>Live Price</th>
+          <th>P&L</th>
+          <th>Support | Resistance</th>
+        </tr>
+      </thead>
+      <tbody id="portfolioBody">
+        <!-- Filled by JS -->
+      </tbody>
+    </table>
   </div>
 
   <script>
     const portfolio = [
-      { symbol: "AVAX", qty: 115.51, buyPrice: 26.4 },
-      { symbol: "INJ", qty: 130.07, buyPrice: 14.47 },
-      { symbol: "RENDER", qty: 215.624, buyPrice: 4.0 },
-      { symbol: "ADX", qty: 9132, buyPrice: 0.11 },
-      { symbol: "HBAR", qty: 3546.82, buyPrice: 0.28 },
+      { symbol: "AVAX", qty: 115.51, entry: 25.96, support: 25.3, resistance: 27 },
+      { symbol: "INJ", qty: 130.07, entry: 15.345, support: 15.1, resistance: 16 },
+      { symbol: "RENDER", qty: 215.624, entry: 4.633, support: 4.4, resistance: 4.95 },
+      { symbol: "ADX", qty: 9132, entry: 0.1095, support: 0.105, resistance: 0.113 },
+      { symbol: "HBAR", qty: 3546.82, entry: 0.28164, support: 0.27, resistance: 0.29 }
     ];
+
+    async function loadAllData() {
+      const ids = [
+        'avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'
+      ];
+      const symbolToId = {
+        AVAX: 'avalanche-2', INJ: 'injective-protocol', RENDER: 'render-token', ADX: 'adex', HBAR: 'hedera-hashgraph'
+      };
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
+      const data = await res.json();
+      const body = document.getElementById('portfolioBody');
+      body.innerHTML = '';
+      portfolio.forEach(c => {
+        const live = data[symbolToId[c.symbol]].usd;
+        const pnl = (live - c.entry) * c.qty;
+        const pnlPercent = (pnl / (c.entry * c.qty)) * 100;
+        const pnlClass = pnl >= 0 ? 'green' : 'red';
+        const row = `
+          <tr>
+            <td>${c.symbol}</td>
+            <td>${c.qty.toFixed(2)}</td>
+            <td>$${c.entry.toFixed(2)}</td>
+            <td>$${live.toFixed(2)}</td>
+            <td class="${pnlClass}">${pnl >= 0 ? '+' : '-'}$${Math.abs(pnl).toFixed(2)} / ${pnlPercent.toFixed(2)}%</td>
+            <td>S: ${c.support} | R: ${c.resistance}</td>
+          </tr>
+        `;
+        body.innerHTML += row;
+      });
+      document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
 
     function toggleTheme() {
       document.body.classList.toggle('light');
-    }
-
-    async function loadAllData() {
-      const coinMap = {
-        AVAX: "avalanche-2",
-        INJ: "injective-protocol",
-        RENDER: "render-token",
-        ADX: "adex",
-        HBAR: "hedera-hashgraph"
-      };
-
-      const timestamp = new Date().toLocaleTimeString();
-      document.getElementById("lastUpdated").textContent = `Last updated: ${timestamp}`;
-
-      try {
-        const cgResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2,injective-protocol,render-token,adex,hedera-hashgraph&vs_currencies=usd&include_24hr_change=true");
-        const cgData = await cgResponse.json();
-
-        let html = "";
-        let totalPnl = 0;
-
-        for (let coin of portfolio) {
-          const id = coinMap[coin.symbol];
-          const price = cgData[id].usd;
-          const value = (price * coin.qty).toFixed(2);
-          const cost = coin.qty * coin.buyPrice;
-          const pnl = price * coin.qty - cost;
-          const pnlPercent = ((pnl / cost) * 100).toFixed(2);
-
-          totalPnl += pnl;
-
-          const pnlText = pnl >= 0
-            ? `<span class='green'>+$${pnl.toFixed(2)} / +${pnlPercent}%</span>`
-            : `<span class='red'>-$${Math.abs(pnl.toFixed(2))} / ${pnlPercent}%</span>`;
-
-          html += `<div class='coin-row'>
-${coin.symbol.padEnd(6)} : ${coin.qty.toFixed(2).padStart(8)} × $${price.toFixed(2).padStart(7)} = $${value.padStart(8)}   (P&L:${pnlText})
-          </div>`;
-        }
-
-        document.getElementById("portfolio").innerHTML = html;
-
-        const totalText = totalPnl >= 0
-          ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
-          : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
-        document.getElementById("totalPnl").innerHTML = `Total P&L: ${totalText}`;
-
-        const marketHtml = Object.keys(coinMap).map(symbol => {
-          const id = coinMap[symbol];
-          return `<div class="market-line">${symbol}: $${cgData[id].usd.toFixed(2)} (${cgData[id].usd_24h_change.toFixed(2)}%)</div>`;
-        }).join('');
-        document.getElementById("marketOverview").innerHTML = marketHtml;
-
-      } catch (e) {
-        document.getElementById("portfolio").textContent = "Error loading portfolio.";
-        document.getElementById("marketOverview").textContent = "Error loading market data.";
-      }
-
-      try {
-        const domRes = await fetch("https://api.coingecko.com/api/v3/global");
-        const domData = await domRes.json();
-        document.getElementById("btcDominance").textContent = `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
-      } catch (e) {
-        document.getElementById("btcDominance").textContent = "Error loading dominance.";
-      }
-
-      try {
-        const fgRes = await fetch("https://api.alternative.me/fng/");
-        const fgData = await fgRes.json();
-        const fg = fgData.data[0];
-        document.getElementById("fearGreed").textContent = `Index: ${fg.value} (${fg.value_classification})`;
-      } catch (e) {
-        document.getElementById("fearGreed").textContent = "Error loading Fear & Greed Index.";
-      }
     }
 
     loadAllData();
