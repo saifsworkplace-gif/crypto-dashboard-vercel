@@ -63,6 +63,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
     .refresh-btn, .theme-btn {
       background-color: var(--accent);
@@ -247,10 +248,13 @@
       const symbolToId = {
         AVAX: 'avalanche-2', INJ: 'injective-protocol', RENDER: 'render-token', ADX: 'adex', HBAR: 'hedera-hashgraph'
       };
-      const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`);
+
+      const proxy = 'https://corsproxy.io/?';
+
+      const res = await fetch(`${proxy}https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`);
       const marketData = await res.json();
 
-      const priceDataRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids.join(',') + "&vs_currencies=usd");
+      const priceDataRes = await fetch(`${proxy}https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
       const priceData = await priceDataRes.json();
 
       const body = document.getElementById('portfolioBody');
@@ -301,12 +305,12 @@
         `;
       });
 
-      const domRes = await fetch("https://api.coingecko.com/api/v3/global");
+      const domRes = await fetch(`${proxy}https://api.coingecko.com/api/v3/global`);
       const domData = await domRes.json();
       document.getElementById("btcDominance").textContent =
         `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
 
-      const fgRes = await fetch("https://api.alternative.me/fng/");
+      const fgRes = await fetch(`${proxy}https://api.alternative.me/fng/`);
       const fgData = await fgRes.json();
       const fg = fgData.data[0];
       document.getElementById("fearGreed").textContent =
