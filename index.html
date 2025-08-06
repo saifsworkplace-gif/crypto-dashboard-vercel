@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crypto Portfolio Table</title>
+  <title>Crypto Portfolio Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -25,6 +25,14 @@
       color: var(--text);
       margin: 0;
       padding: 0;
+    }
+    header {
+      background-color: var(--card);
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--accent);
     }
     .section {
       background: var(--card);
@@ -64,8 +72,6 @@
     .timestamp {
       font-size: 12px;
       color: gray;
-      text-align: right;
-      margin-top: 10px;
     }
     .total-row {
       font-weight: bold;
@@ -92,12 +98,13 @@
     }
     @media (max-width: 768px) {
       .theme-btn, .refresh-btn {
-        flex: 1 1 48%;
+        flex: 1 1 100%;
       }
     }
   </style>
 </head>
 <body>
+  <header>📈 Crypto Portfolio Dashboard</header>
   <div class="section">
     <h2>
       📊 Portfolio
@@ -139,7 +146,7 @@
   <div class="section">
     <h2>🧠 Market Sentiment</h2>
     <div><span class="highlight">BTC Dominance:</span> <span id="btcDominance" class="highlight-value">--%</span></div>
-    <div><span class="highlight">Fear &amp; Greed Index:</span> <span id="fearGreed" class="highlight-value">--</span></div>
+    <div><span class="highlight">Fear & Greed Index:</span> <span id="fearGreed" class="highlight-value">--</span></div>
   </div>
 
   <script>
@@ -151,29 +158,32 @@
       { symbol: "HBAR", qty: 300, entry: 0.2, support: 0.27, resistance: 0.29 },
     ];
 
-    const symbolToId = {
-      AVAX: 'avalanche-2',
-      INJ: 'injective-protocol',
-      RENDER: 'render-token',
-      ADX: 'adex',
-      HBAR: 'hedera-hashgraph'
-    };
-
     function toggleTheme() {
       document.body.classList.toggle("light");
     }
 
     async function loadAllData() {
-      const ids = Object.values(symbolToId);
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
-      const priceData = await res.json();
+      const symbolMap = {
+        AVAX: "AVAXUSDT",
+        INJ: "INJUSDT",
+        RENDER: "RNDRUSDT",
+        ADX: "ADXUSDT",
+        HBAR: "HBARUSDT"
+      };
+
+      const priceMap = {};
+      for (let symbol in symbolMap) {
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbolMap[symbol]}`);
+        const data = await res.json();
+        priceMap[symbol] = parseFloat(data.price);
+      }
 
       const body = document.getElementById("portfolioBody");
       body.innerHTML = "";
       let totalPnl = 0;
 
       portfolio.forEach((c, i) => {
-        const live = priceData[symbolToId[c.symbol]].usd;
+        const live = priceMap[c.symbol];
         const pnl = (live - c.entry) * c.qty;
         totalPnl += pnl;
         const pnlPercent = (pnl / (c.entry * c.qty)) * 100;
@@ -199,32 +209,6 @@
 
       document.getElementById("lastUpdated").textContent =
         `Last updated: ${new Date().toLocaleTimeString()}`;
-
-      const overviewBlock = document.getElementById("marketOverview");
-      overviewBlock.innerHTML = '';
-      const overviewRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids.join(',')}`);
-      const marketData = await overviewRes.json();
-
-      marketData.forEach(coin => {
-        overviewBlock.innerHTML += `
-          <div style="margin-bottom: 16px;">
-            <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
-            <span>Price: <span style="color: var(--accent)">$${coin.current_price.toFixed(2)}</span></span><br>
-            <span>Market Cap: <span style="color: var(--accent)">$${(coin.market_cap / 1e9).toFixed(2)}B</span></span><br>
-            <span>24h Volume: <span style="color: var(--accent)">$${(coin.total_volume / 1e6).toFixed(2)}M</span></span><br>
-            <span>Rank: <span style="color: var(--accent)">#${coin.market_cap_rank}</span></span><br>
-            <a href="https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD" target="_blank">Chart 📈</a>
-          </div>
-        `;
-      });
-
-      const domRes = await fetch("https://api.coingecko.com/api/v3/global");
-      const domData = await domRes.json();
-      document.getElementById("btcDominance").textContent = `${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
-
-      const fgRes = await fetch("https://api.alternative.me/fng/");
-      const fgData = await fgRes.json();
-      document.getElementById("fearGreed").textContent = `${fgData.data[0].value} (${fgData.data[0].value_classification})`;
     }
 
     function updateValue(index, value, field) {
