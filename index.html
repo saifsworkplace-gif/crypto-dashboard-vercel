@@ -72,9 +72,24 @@
       font-size: 12px;
       color: gray;
     }
+    .total-pnl {
+      text-align: right;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    .main-header {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent);
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
+  <div class="main-header">🚀 Crypto Trading Tracker</div>
+
   <div class="section">
     <h2>
       💼 Your Portfolio
@@ -99,6 +114,25 @@
         <!-- Filled by JS -->
       </tbody>
     </table>
+    <div id="totalPnl" class="total-pnl"></div>
+  </div>
+
+  <div class="section">
+    <h2>📊 Market Overview</h2>
+    <hr>
+    <div id="marketOverview">Loading...</div>
+  </div>
+
+  <div class="section">
+    <h2>👑 BTC Dominance</h2>
+    <hr>
+    <div id="btcDominance">Loading...</div>
+  </div>
+
+  <div class="section">
+    <h2>😨 Fear & Greed Index</h2>
+    <hr>
+    <div id="fearGreed">Loading...</div>
   </div>
 
   <script>
@@ -110,6 +144,10 @@
       { symbol: "HBAR", qty: 3546.82, entry: 0.28164, support: 0.27, resistance: 0.29 }
     ];
 
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+
     async function loadAllData() {
       const ids = [
         'avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'
@@ -117,13 +155,15 @@
       const symbolToId = {
         AVAX: 'avalanche-2', INJ: 'injective-protocol', RENDER: 'render-token', ADX: 'adex', HBAR: 'hedera-hashgraph'
       };
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true`);
       const data = await res.json();
       const body = document.getElementById('portfolioBody');
       body.innerHTML = '';
+      let totalPnl = 0;
       portfolio.forEach(c => {
         const live = data[symbolToId[c.symbol]].usd;
         const pnl = (live - c.entry) * c.qty;
+        totalPnl += pnl;
         const pnlPercent = (pnl / (c.entry * c.qty)) * 100;
         const pnlClass = pnl >= 0 ? 'green' : 'red';
         const row = `
@@ -138,11 +178,28 @@
         `;
         body.innerHTML += row;
       });
+      const totalText = totalPnl >= 0
+        ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
+        : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
+      document.getElementById("totalPnl").innerHTML = `Total P&L: ${totalText}`;
       document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-    }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
+      const marketHtml = portfolio.map(c => {
+        const id = symbolToId[c.symbol];
+        const change = data[id].usd_24h_change?.toFixed(2) || '0.00';
+        const price = data[id].usd.toFixed(2);
+        return `<div>${c.symbol}: $${price} (${change}%)</div>`;
+      }).join('');
+      document.getElementById("marketOverview").innerHTML = marketHtml;
+
+      const domRes = await fetch("https://api.coingecko.com/api/v3/global");
+      const domData = await domRes.json();
+      document.getElementById("btcDominance").textContent = `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
+
+      const fgRes = await fetch("https://api.alternative.me/fng/");
+      const fgData = await fgRes.json();
+      const fg = fgData.data[0];
+      document.getElementById("fearGreed").textContent = `Index: ${fg.value} (${fg.value_classification})`;
     }
 
     loadAllData();
