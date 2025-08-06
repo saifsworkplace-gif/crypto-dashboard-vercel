@@ -59,84 +59,12 @@
     }
     .green { color: var(--green); }
     .red { color: var(--red); }
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .refresh-btn, .theme-btn {
-      background-color: var(--accent);
-      color: var(--bg);
-      padding: 5px 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
     .timestamp {
       font-size: 12px;
       color: gray;
     }
     .total-row {
       font-weight: bold;
-    }
-    .main-header {
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--accent);
-      margin-top: 30px;
-    }
-    .market-block {
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px dashed #555;
-    }
-    .market-block a {
-      color: var(--accent);
-      text-decoration: none;
-      margin-right: 10px;
-    }
-    .market-line {
-      display: flex;
-      justify-content: space-between;
-      font-variant-numeric: tabular-nums;
-      gap: 20px;
-    }
-    @media (max-width: 768px) {
-      .market-line {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-      }
-      .mobile-chart {
-        display: inline;
-      }
-      .desktop-chart {
-        display: none;
-      }
-    }
-    @media (min-width: 769px) {
-      .mobile-chart {
-        display: none;
-      }
-      .desktop-chart {
-        display: inline;
-      }
-    }
-    .back-to-top {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      padding: 10px 15px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: bold;
-      z-index: 999;
     }
     .edit-btn {
       cursor: pointer;
@@ -188,99 +116,61 @@
       { symbol: "INJ", qty: 5, entry: 22, support: 15.1, resistance: 16 },
       { symbol: "RENDER", qty: 20, entry: 2.1, support: 4.4, resistance: 4.95 },
       { symbol: "ADX", qty: 100, entry: 0.12, support: 0.105, resistance: 0.113 },
-      { symbol: "HBAR", qty: 300, entry: 0.2, support: 0.27, resistance: 0.29 }
+      { symbol: "HBAR", qty: 300, entry: 0.2, support: 0.27, resistance: 0.29 },
     ];
 
-    async function fetchJsonWithProxy(url) {
-      try {
-        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-        const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        return await res.json();
-      } catch (e) {
-        console.error("Failed to fetch:", url, e);
-        return null;
-      }
-    }
+    const symbolToId = {
+      AVAX: 'avalanche-2',
+      INJ: 'injective-protocol',
+      RENDER: 'render-token',
+      ADX: 'adex',
+      HBAR: 'hedera-hashgraph'
+    };
 
     async function loadAllData() {
-      const ids = ['avalanche-2', 'injective-protocol', 'render-token', 'adex', 'hedera-hashgraph'];
-      const symbolToId = {
-        AVAX: 'avalanche-2', INJ: 'injective-protocol', RENDER: 'render-token', ADX: 'adex', HBAR: 'hedera-hashgraph'
-      };
+      const ids = Object.values(symbolToId);
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
+      const priceData = await res.json();
 
-      const marketData = await fetchJsonWithProxy(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids.join(',')}&order=market_cap_desc`);
-      const priceData = await fetchJsonWithProxy(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
-
-      if (!marketData || !priceData) return;
-
-      const body = document.getElementById('portfolioBody');
-      if (!body) return;
-      body.innerHTML = '';
+      const body = document.getElementById("portfolioBody");
+      body.innerHTML = "";
       let totalPnl = 0;
+
       portfolio.forEach((c, i) => {
-        const live = priceData[symbolToId[c.symbol]]?.usd || 0;
+        const live = priceData[symbolToId[c.symbol]].usd;
         const pnl = (live - c.entry) * c.qty;
         totalPnl += pnl;
         const pnlPercent = (pnl / (c.entry * c.qty)) * 100;
-        const pnlClass = pnl >= 0 ? 'green' : 'red';
+        const pnlClass = pnl >= 0 ? "green" : "red";
+
         const row = `
           <tr>
             <td>${c.symbol}</td>
-            <td>${c.qty.toFixed(2)}</td>
-            <td>$${c.entry.toFixed(2)}</td>
+            <td contenteditable='true' onblur='updateValue(${i}, this.textContent, "qty")'>${c.qty}</td>
+            <td contenteditable='true' onblur='updateValue(${i}, this.textContent, "entry")'>${c.entry}</td>
             <td>$${live.toFixed(2)}</td>
-            <td class="${pnlClass}">${pnl >= 0 ? '+' : '-'}$${Math.abs(pnl).toFixed(2)} / ${pnlPercent.toFixed(2)}%</td>
+            <td class='${pnlClass}'>${pnl >= 0 ? '+' : '-'}$${Math.abs(pnl).toFixed(2)} / ${pnlPercent.toFixed(2)}%</td>
             <td>S: ${c.support} | R: ${c.resistance}</td>
-            <td class="edit-btn" onclick="editRow(${i})">✏️</td>
+            <td class="edit-btn">✏️</td>
           </tr>
         `;
         body.innerHTML += row;
       });
 
-      const totalPnlElem = document.getElementById("totalPnl");
-      if (totalPnlElem) {
-        totalPnlElem.innerHTML =
-          totalPnl >= 0
-            ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
-            : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
-      }
+      document.getElementById("totalPnl").innerHTML =
+        totalPnl >= 0
+          ? `<span class='green'>+$${totalPnl.toFixed(2)}</span>`
+          : `<span class='red'>-$${Math.abs(totalPnl.toFixed(2))}</span>`;
 
-      const lastUpdated = document.getElementById("lastUpdated");
-      if (lastUpdated) {
-        lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-      }
+      document.getElementById("lastUpdated").textContent =
+        `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
 
-      const overviewBlock = document.getElementById("marketOverview");
-      if (overviewBlock) {
-        overviewBlock.innerHTML = '';
-        marketData.forEach(coin => {
-          const mobileLink = `https://www.tradingview.com/chart/?symbol=${coin.symbol.toUpperCase()}USD`;
-          overviewBlock.innerHTML += `
-            <div class="market-block">
-              <strong><img src="${coin.image}" alt="${coin.symbol}" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"> ${coin.name} (${coin.symbol.toUpperCase()})</strong><br>
-              <div class="market-line"><span>Price:</span> <span>$${coin.current_price.toFixed(2)}</span></div>
-              <div class="market-line"><span>Market Cap:</span> <span>$${(coin.market_cap / 1e9).toFixed(2)}B</span></div>
-              <div class="market-line"><span>24h Volume:</span> <span>$${(coin.total_volume / 1e6).toFixed(2)}M</span></div>
-              <div class="market-line"><span>Rank:</span> <span>#${coin.market_cap_rank}</span></div>
-              <a class="desktop-chart" href="https://www.tradingview.com/chart/NGJkbIn7/?symbol=Binance:${coin.symbol.toUpperCase()}USD" target="_blank">CHART 📊</a>
-              <a class="mobile-chart" href="${mobileLink}" target="_blank">Mobile CHART 📱</a>
-            </div>
-          `;
-        });
-      }
-
-      const domData = await fetchJsonWithProxy(`https://api.coingecko.com/api/v3/global`);
-      if (domData) {
-        const btcElem = document.getElementById("btcDominance");
-        if (btcElem) btcElem.textContent = `BTC Dominance: ${domData.data.market_cap_percentage.btc.toFixed(2)}%`;
-      }
-
-      const fgData = await fetchJsonWithProxy(`https://api.alternative.me/fng/`);
-      if (fgData) {
-        const fg = fgData.data[0];
-        const fgElem = document.getElementById("fearGreed");
-        if (fgElem) fgElem.textContent = `Index: ${fg.value} (${fg.value_classification})`;
+    function updateValue(index, value, field) {
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed)) {
+        portfolio[index][field] = parsed;
+        loadAllData();
       }
     }
 
